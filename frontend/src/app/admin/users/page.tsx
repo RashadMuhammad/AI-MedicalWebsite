@@ -266,9 +266,10 @@ export default function UsersPage() {
                     <Avatar className="h-12 w-12">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+  .split(" ")
+  .map((n: string) => n[0])
+  .join("")}
+
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -316,9 +317,10 @@ export default function UsersPage() {
                     <Avatar className="h-12 w-12">
                       <AvatarFallback className="bg-primary text-primary-foreground">
                         {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+  .split(" ")
+  .map((n: string) => n[0])
+  .join("")}
+
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
@@ -366,10 +368,11 @@ export default function UsersPage() {
                   <div className="flex items-start gap-4">
                     <Avatar className="h-12 w-12">
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                       {user.name
+  .split(" ")
+  .map((n: string) => n[0])
+  .join("")}
+
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">

@@ -1,5 +1,7 @@
 "use client"
 
+"use client"
+
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
@@ -12,17 +14,18 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        // Redirect to appropriate dashboard based on role
-        router.push(`/${user.role}`)
+        // Redirect user to their role-based dashboard
+        router.replace(`/${user.role}`)
       } else {
-        router.push("/login")
+        // No user logged in, redirect to login
+        router.replace("/login")
       }
     }
   }, [user, isLoading, router])
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
     </div>
   )
 }

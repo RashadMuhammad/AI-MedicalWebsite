@@ -1,21 +1,26 @@
 // User roles in the hospital system
-export type UserRole = "patient" | "doctor" | "admin"
+export type UserRole = "patient" | "doctor" | "admin1"
 
 // User interface
 export interface User {
   id: string
   email: string
+  password?: string // for authentication (optional when fetched)
   name: string
-  role: UserRole
+  roleId: number // FK to user_roles table
+  role?: UserRole // optional populated object from join
   phone?: string
   avatar?: string
-  specialization?: string // For doctors
-  department?: string // For doctors and admin
-  dateOfBirth?: string // For patients
-  bloodGroup?: string // For patients
+  specialization?: string // for doctors
+  department?: string // for doctors/admin
+  dateOfBirth?: string // for patients
+  bloodGroup?: string // for patients
   address?: string
   emergencyContact?: string
+  createdAt?: string
+  updatedAt?: string
 }
+
 
 // Appointment interface
 export interface Appointment {
