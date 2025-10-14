@@ -1,8 +1,7 @@
 import { pool } from "../config/db.js";
-
 export async function createUsersRolesTable() {
-  // 1️⃣ Create table if it doesn't exist
-  await pool.query(`
+    // 1️⃣ Create table if it doesn't exist
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS user_roles (
       role_id SERIAL PRIMARY KEY, 
       role_name VARCHAR(50) NOT NULL UNIQUE,
@@ -10,10 +9,9 @@ export async function createUsersRolesTable() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  console.log("✅ user_roles table created");
-
-  // 2️⃣ Insert all hospital roles (without inline comments)
-  await pool.query(`
+    console.log("✅ user_roles table created");
+    // 2️⃣ Insert all hospital roles (without inline comments)
+    await pool.query(`
    INSERT INTO user_roles (role_name, role_description)
 VALUES
   ('super_admin', 'System Super Admin with full permissions'),
@@ -41,5 +39,5 @@ VALUES
 ON CONFLICT (role_name) DO NOTHING;
 
   `);
-  console.log("✅ All hospital roles inserted");
+    console.log("✅ All hospital roles inserted");
 }

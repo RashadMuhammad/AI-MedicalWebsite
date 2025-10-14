@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from "lucide-react"
+import { apiFetch } from "@/lib/api"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -17,29 +18,34 @@ export default function LoginPage() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const login = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
+const login = async (email: string, password: string) => {
+  const { res, data } = await apiFetch("/api/users/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
-    if (!res.ok) {
-      const data = await res.json()
-      throw new Error(data.error || "Login failed")
-    }
+  console.log("Response:", data, "Status:", res.status);
 
-    const data = await res.json()
-    localStorage.setItem("token", data.token)
-    localStorage.setItem("userRole", data.user.role)
-    return data.user
+  if (!res.ok) {
+    throw new Error(data?.error || "Login failed");
   }
+// Save access token and user role locally
+    localStorage.setItem("accessToken", data.accessToken);
+    localStorage.setItem("refreshToken", data.refreshToken); // optional if you want
+    localStorage.setItem("userRole", data.user.role);
+
+
+  return data.user; // return the user object
+};
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     try {
       const user = await login(email, password)
+      console.log(user);
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.name}!`,

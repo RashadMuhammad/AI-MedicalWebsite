@@ -1,7 +1,6 @@
 import { pool } from "../config/db.js";
-
 export async function createUsersTable() {
-  await pool.query(`
+    await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       email VARCHAR(100) UNIQUE NOT NULL,
@@ -20,5 +19,10 @@ export async function createUsersTable() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
-  console.log("✅ Users table created with role_id");
+    console.log("✅ Users table created with role_id");
 }
+await pool.query(`
+  ALTER TABLE users
+  ADD COLUMN refresh_token TEXT;
+`);
+console.log("✅ refresh_token column added to users table");

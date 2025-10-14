@@ -21,3 +21,8 @@ export async function createUsersTable() {
   `);
     console.log("✅ Users table created with role_id");
 }
+await pool.query(`
+  ALTER TABLE users
+  ADD COLUMN refresh_token TEXT;
+`);
+console.log("✅ refresh_token column added to users table");
