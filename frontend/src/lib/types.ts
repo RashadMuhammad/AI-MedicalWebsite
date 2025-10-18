@@ -17,10 +17,13 @@ export interface User {
   bloodGroup?: string // for patients
   address?: string
   emergencyContact?: string
-  createdAt?: string
-  updatedAt?: string
+  created_at?: string
+  updated_At?: string
 }
-
+ export interface Role {
+  role_name: string;
+  role_description?: string; // optional
+}
 
 // Appointment interface
 export interface Appointment {

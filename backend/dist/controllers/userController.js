@@ -94,3 +94,70 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+// GET /api/users/count-by-role
+export const getCountByRole = async (req, res) => {
+    try {
+        const query = `
+      SELECT 
+        r.role_name,
+        COUNT(u.id) AS user_count
+      FROM users u
+      JOIN user_roles r ON u.role_id = r.role_id
+      GROUP BY r.role_name
+      ORDER BY r.role_name;
+    `;
+        const { rows } = await pool.query(query);
+        res.json({ success: true, data: rows });
+    }
+    catch (error) {
+        console.error("Error fetching user counts:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+export const getAllUsers = async (req, res) => {
+    try {
+        const query = `
+      SELECT *
+      FROM users
+      ORDER BY created_at DESC
+    `;
+        const { rows } = await pool.query(query);
+        res.json({ success: true, data: rows });
+    }
+    catch (error) {
+        console.error("Error fetching users:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+export const getUsersByRole = async (req, res) => {
+    try {
+        const { role } = req.query;
+        // 1️⃣ Build base query
+        let query = `
+      SELECT u.id, u.name, u.email, u.phone, r.role_name, u.created_at
+      FROM users u
+      JOIN user_roles r ON u.role_id = r.role_id
+    `;
+        // 2️⃣ Add role filter if provided
+        const params = [];
+        if (role) {
+            query += ` WHERE r.role_name = $1`;
+            params.push(role);
+        }
+        query += ` ORDER BY u.created_at`;
+        const { rows } = await pool.query(query, params);
+        // 3️⃣ Group users by role
+        const usersByRole = {};
+        rows.forEach(user => {
+            const roleName = user.role_name || "unknown";
+            if (!usersByRole[roleName])
+                usersByRole[roleName] = [];
+            usersByRole[roleName].push(user);
+        });
+        res.json({ success: true, data: usersByRole });
+    }
+    catch (error) {
+        console.error("Error fetching users by role:", error);
+        res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
