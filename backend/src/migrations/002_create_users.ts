@@ -1,4 +1,4 @@
-import { pool } from "../config/db.js";
+import { pool } from "../config/db";
 
 export async function createUsersTable() {
   await pool.query(`
@@ -38,24 +38,24 @@ export async function createUsersTable() {
 
   // ✅ Update department to department_id safely
   await pool.query(`
-    DO $$
-    BEGIN
-      IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'department'
-      ) THEN
-        ALTER TABLE users DROP COLUMN department;
-      END IF;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'department'
+  ) THEN
+    ALTER TABLE users DROP COLUMN department;
+  END IF;
 
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'users' AND column_name = 'department_id'
-      ) THEN
-        ALTER TABLE users ADD COLUMN department_id INT REFERENCES departments(department_id) ON DELETE SET NULL;
-      END IF;
-    END $$;
-  `);
-  console.log("✅ Users table updated with department_id foreign key");
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'users' AND column_name = 'department_id'
+  ) THEN
+    ALTER TABLE users ADD COLUMN department_id INT DEFAULT 0 REFERENCES departments(department_id) ON DELETE SET DEFAULT;
+  END IF;
+END $$;
+`);
+
 
   // ✅ Add is_active column safely
   await pool.query(`

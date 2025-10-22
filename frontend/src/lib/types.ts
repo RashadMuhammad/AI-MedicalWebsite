@@ -8,15 +8,15 @@ export interface User {
   password?: string // for authentication (optional when fetched)
   name: string
   roleId: number // FK to user_roles table
-  role?: UserRole // optional populated object from join
+  role_name?: UserRole // optional populated object from join
   phone?: string
   avatar?: string
   specialization?: string // for doctors
-  department?: string // for doctors/admin
+  department_id?: number // for doctors/admin
   dateOfBirth?: string // for patients
-  bloodGroup?: string // for patients
+  blood_group?: string // for patients
   address?: string
-  emergencyContact?: string
+  emergency_contact?: string
   created_at?: string
   updated_At?: string
 }
@@ -94,4 +94,24 @@ export interface BillItem {
   quantity: number
   unitPrice: number
   total: number
+}
+
+
+ export interface Staff {
+  id: number | string
+  name: string
+  role: string
+  head_id:string
+}
+
+ export interface Department {
+  department_id: number | string
+  name: string
+  head: string
+  head_id?: number | string
+  doctors_count: number
+  patients_count: number
+  revenue: number
+  status: string
+  staff: Staff[]
 }

@@ -1,24 +1,25 @@
 {
-  "name": "medical-backend",
+  "name": "backend",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "migrate": "ts-node --loader ts-node/esm src/migrations/index.ts"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^3.0.0",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.19.20",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "dev": "ts-node-dev --respawn --transpile-only --loader ts-node/esm src/server.ts",
+    "migrate": "npx ts-node src/migrations/index.ts"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.1"
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.5.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
   }
 }

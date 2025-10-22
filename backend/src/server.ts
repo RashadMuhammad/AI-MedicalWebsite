@@ -1,9 +1,10 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import { pool } from "./config/db.js";
-import userRoutes from "./routes/userRoutes.js";
-import userRoleRoutes from "./routes/userRoleRoutes.js";
+import { pool } from "./config/db";
+import userRoutes from "./routes/userRoutes";
+import userRoleRoutes from "./routes/userRoleRoutes";
+import departmentRoutes from "./routes/departmentRoutes"
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,5 +19,6 @@ app.get("/", async (_req, res) => {
 });
 app.use("/api/users", userRoutes);
 app.use("/api/roles", userRoleRoutes);
+app.use("/api/departments", departmentRoutes);
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

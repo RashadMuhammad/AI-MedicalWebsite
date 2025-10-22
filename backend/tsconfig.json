@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "module": "nodenext",
-    "target": "esnext",
-    "moduleResolution": "nodenext",
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "rootDir": "./src",
     "esModuleInterop": true,
     "strict": true,
-    "verbatimModuleSyntax": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
     "skipLibCheck": true
   }
 }

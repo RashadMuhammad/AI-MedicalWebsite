@@ -1,6 +1,6 @@
 // backend/src/routes/userRoleRoutes.ts
 import express from "express";
-import { getRoles, addRole } from "../controllers/userRoleController.js";
+import { getRoles, addRole } from "../controllers/userRoleController";
 
 const router = express.Router();
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -26,10 +26,40 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const [userInfo, setUserInfo] = useState<{ name: string; email: string; role: string } | null>(null)
+
   const handleLogout = () => {
     logout()
+    localStorage.removeItem("name")
+    localStorage.removeItem("email")
+    localStorage.removeItem("userRole")
     router.push("/login")
   }
+
+useEffect(() => {
+  // Fetch user info from localStorage if exists
+  const name = localStorage.getItem("name") ?? ""  // fallback to empty string
+  const email = localStorage.getItem("email") ?? ""
+  const role = localStorage.getItem("userRole") ?? ""
+
+  console.log("tesdd",name,email,role)
+
+  if (name && email && role) {
+    setUserInfo({ name, email, role })
+  } else if (user) {
+    // fallback to auth context and ensure strings
+    const safeName = user.name ?? ""
+    const safeEmail = user.email ?? ""
+    const safeRole = user.role ?? ""
+
+    setUserInfo({ name: safeName, email: safeEmail, role: safeRole })
+
+    localStorage.setItem("userName", safeName)
+    localStorage.setItem("userEmail", safeEmail)
+    localStorage.setItem("userRole", safeRole)
+  }
+}, [user])
+
 
   const getInitials = (name: string) => {
     return name
@@ -37,6 +67,13 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
       .map((n) => n[0])
       .join("")
       .toUpperCase()
+  }
+
+  const handleAvatarClick = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent dropdown from toggling
+    if (userInfo) {
+      router.push("/profile")
+    }
   }
 
   return (
@@ -59,9 +96,8 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
             <div>
               <h1 className="text-lg font-semibold">MediMind AI</h1>
               <p className="text-xs text-muted-foreground">
-                {user?.role === "patient" && "Patient Portal"}
-                {user?.role === "doctor" && "Doctor Dashboard"}
-                {/* {user?.role === "admin" && "Admin Panel"} */}
+                {userInfo?.role === "patient" && "Patient Portal"}
+                {userInfo?.role === "doctor" && "Doctor Dashboard"}
               </p>
             </div>
           </div>
@@ -69,24 +105,27 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
           {/* Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                <Avatar>
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {user ? getInitials(user.name) : "U"}
+              <div>
+                <Avatar
+                  onClick={handleAvatarClick}
+                  className="cursor-pointer h-10 w-10"
+                >
+                  <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
+                    {userInfo ? getInitials(userInfo.name) : "U"}
                   </AvatarFallback>
                 </Avatar>
-              </Button>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  <p className="text-xs font-medium capitalize text-primary">{user?.role}</p>
+                  <p className="text-sm font-medium">{userInfo?.name}</p>
+                  <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
+                  <p className="text-xs font-medium capitalize text-primary">{userInfo?.role}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
@@ -109,15 +148,12 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
 
         {/* Mobile Sidebar (Drawer) */}
         <>
-          {/* Overlay */}
           {sidebarOpen && (
             <div
               className="fixed inset-0 z-40 bg-black/40 md:hidden"
               onClick={() => setSidebarOpen(false)}
             />
           )}
-
-          {/* Drawer */}
           <div
             className={`fixed top-0 left-0 z-50 h-full w-64 bg-card border-r shadow-lg transform transition-transform duration-300 md:hidden ${
               sidebarOpen ? "translate-x-0" : "-translate-x-full"

@@ -5,6 +5,8 @@ import type { User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 type Status = {
   type: "success" | "warning" | "error";
@@ -94,8 +96,8 @@ export default function RegisterPage() {
 
         {/* Full Name */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Full Name</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Full Name</Label>
+          <Input
             type="text"
             name="name"
             value={formData.name || ""}
@@ -107,8 +109,8 @@ export default function RegisterPage() {
 
         {/* Email */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Email</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Email</Label>
+          <Input
             type="email"
             name="email"
             value={formData.email || ""}
@@ -120,8 +122,8 @@ export default function RegisterPage() {
 
         {/* Password */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Password</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Password</Label>
+          <Input
             type="password"
             name="password"
             value={formData.password || ""}
@@ -133,8 +135,8 @@ export default function RegisterPage() {
 
         {/* Phone */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Phone</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Phone</Label>
+          <Input
             type="tel"
             name="phone"
             value={formData.phone || ""}
@@ -145,8 +147,8 @@ export default function RegisterPage() {
 
         {/* Date of Birth */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Date of Birth</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Date of Birth</Label>
+          <Input
             type="date"
             name="dateOfBirth"
             value={formData.dateOfBirth || ""}
@@ -157,8 +159,8 @@ export default function RegisterPage() {
 
         {/* Blood Group */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Blood Group</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Blood Group</Label>
+          <Input
             type="text"
             name="bloodGroup"
             value={formData.bloodGroup || ""}
@@ -169,8 +171,8 @@ export default function RegisterPage() {
 
         {/* Address */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Address</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Address</Label>
+          <Input
             type="text"
             name="address"
             value={formData.address || ""}
@@ -181,8 +183,8 @@ export default function RegisterPage() {
 
         {/* Emergency Contact */}
         <div>
-          <label className="block text-gray-700 mb-1 font-medium">Emergency Contact</label>
-          <input
+          <Label className="block text-gray-700 mb-1 font-medium">Emergency Contact</Label>
+          <Input
             type="text"
             name="emergencyContact"
             value={formData.emergencyContact || ""}

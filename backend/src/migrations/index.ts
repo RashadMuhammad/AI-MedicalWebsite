@@ -1,7 +1,7 @@
-import { pool } from "../config/db.js";
-import { createUsersRolesTable } from "./001_create_user_roles.js";
-import { createUsersTable } from "./002_create_users.js";
-import { createDepartmentsTable } from  './003_create_departments.js'
+import { pool } from "../config/db";
+import { createUsersRolesTable } from "./001_create_user_roles";
+import { createUsersTable } from "./002_create_users";
+import { createDepartmentsTable } from  './003_create_departments'
 async function runMigrations() {
     try {
         console.log("🚀 Starting migrations...");

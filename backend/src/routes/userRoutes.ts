@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, loginUser, getCountByRole,getAllUsers,getUsersByRole } from "../controllers/userController.js";
+import { createUser, loginUser, getCountByRole,getAllUsers,getUsersByRole,getAllDoctor,updateUser } from "../controllers/userController";
 
 const router = express.Router();
 
@@ -12,5 +12,7 @@ router.get("/count-by-role", getCountByRole);
 // Fetch all users
 router.get("/alluser",getAllUsers );
 router.get("/by-role",getUsersByRole);
+router.get("/doctors",getAllDoctor);
+router.put("/:id", updateUser);
 
 export default router;

@@ -1,4 +1,4 @@
-import { pool } from "../config/db.js";
+import { pool } from "../config/db";
 export async function createUsersRolesTable() {
     // 1️⃣ Create table if it doesn't exist
     await pool.query(`

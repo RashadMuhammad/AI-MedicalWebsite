@@ -34,6 +34,8 @@ const login = async (email: string, password: string) => {
     localStorage.setItem("accessToken", data.accessToken);
     localStorage.setItem("refreshToken", data.refreshToken); // optional if you want
     localStorage.setItem("userRole", data.user.role);
+    localStorage.setItem("email", data.user.email);
+    localStorage.setItem("name", data.user.name);
 
 
   return data.user; // return the user object

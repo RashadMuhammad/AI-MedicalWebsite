@@ -42,10 +42,11 @@ import {
   Building2,
   FileText,
   DollarSign,
+  Edit as EditIcon,
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
-import type { Role, User } from "@/lib/types"
+import type { Role, User, Department } from "@/lib/types"
 
 type Status =
   | {
@@ -89,10 +90,16 @@ export default function UsersPage() {
   const [isAddUserOpen, setIsAddUserOpen] = useState(false)
   const [roles, setRoles] = useState<Role[]>([])
   const [selectedRole, setSelectedRole] = useState<string>("")
-  const [formData, setFormData] = useState<Partial<User>>({ role: undefined })
+  const [formData, setFormData] = useState<Partial<User>>({ role_name: undefined })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState<Status>(null)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [selectedDept, setSelectedDept] = useState<string>("") // used for add form
+
+  // EDIT state
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [editData, setEditData] = useState<Partial<User> | null>(null)
 
   // Fetch users grouped by role
   const fetchUsersByRole = async (role?: string) => {
@@ -129,7 +136,7 @@ export default function UsersPage() {
     fetchUsersByRole()
   }, [])
 
-  // Fetch all roles
+  // Fetch all roles & departments
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -139,7 +146,19 @@ export default function UsersPage() {
         console.error("Error fetching roles:", err)
       }
     }
+
+    const fetchDepartments = async () => {
+      try {
+        const { data } = await apiFetch("/api/departments")
+        // adapt to your Department shape (id vs department_id)
+        setDepartments(data)
+      } catch (err) {
+        console.error("Failed to fetch departments:", err)
+      }
+    }
+
     fetchRoles()
+    fetchDepartments()
   }, [])
 
   // Handle Add User
@@ -158,7 +177,7 @@ export default function UsersPage() {
           title: "✅ User Added",
           description: "New user has been added successfully.",
         })
-        setFormData({ role: undefined, name: "", email: "", phone: "", password: "" })
+
         setSelectedRole("")
         setIsAddUserOpen(false)
         fetchUsersByRole()
@@ -189,6 +208,45 @@ export default function UsersPage() {
     setSelectedUser(user)
   }
 
+  // --- EDIT handlers ---
+  const handleEditClick = (user: User) => {
+  const prefillData = {
+    ...user,
+    
+  }
+
+  console.log("Prefilled editData:", prefillData) // 👈 check what is being set
+  setEditData(prefillData)
+  setIsEditOpen(true)
+}
+
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editData || !editData.id) return
+    setIsSubmitting(true)
+    try {
+      const { res, data } = await apiFetch(`/api/users/${editData.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editData),
+      })
+      if (res.ok) {
+        toast({ title: "✅ User Updated", description: "User details updated successfully." })
+        setIsEditOpen(false)
+        setEditData(null)
+        fetchUsersByRole()
+      } else {
+        toast({ title: "❌ Update failed", description: data?.error || "Server error" })
+      }
+    } catch (err) {
+      console.error("Update user error:", err)
+      toast({ title: "❌ Error", description: "Could not update user" })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <DashboardLayout navigation={<AdminNavigation />}>
       <div className="space-y-6">
@@ -217,7 +275,7 @@ export default function UsersPage() {
                     value={selectedRole}
                     onValueChange={(v) => {
                       setSelectedRole(v)
-                      setFormData({ ...formData, role: v as User["role"] })
+                      setFormData({ ...formData, role_name: v as User["role_name"] })
                     }}
                   >
                     <SelectTrigger>
@@ -238,6 +296,7 @@ export default function UsersPage() {
                   <Input
                     type="text"
                     value={formData.name || ""}
+                    placeholder="Enter full name"
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
@@ -247,6 +306,7 @@ export default function UsersPage() {
                   <Label>Email</Label>
                   <Input
                     type="email"
+                    placeholder="user@email.com"
                     value={formData.email || ""}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
@@ -257,6 +317,7 @@ export default function UsersPage() {
                   <Label>Phone</Label>
                   <Input
                     type="tel"
+                    placeholder="+1234567890"
                     value={formData.phone || ""}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     required
@@ -267,11 +328,89 @@ export default function UsersPage() {
                   <Label>Password</Label>
                   <Input
                     type="password"
+                    placeholder="Enter password"
                     value={formData.password || ""}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                   />
                 </div>
+
+                {formData.role_name === "doctor" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="specialization">Specialization</Label>
+                    <Input
+                      id="specialization"
+                      placeholder="e.g., Cardiology"
+                      value={formData.specialization || ""}
+                      onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                    />
+                  </div>
+                )}
+
+                {formData.role_name === "patient" && (
+                  <>
+                    <div>
+                      <Label className="block text-gray-700 mb-1 font-medium">Blood Group</Label>
+                      <Input
+                        type="text"
+                        placeholder="e.g., O+, A-, B+, AB+"
+                        name="bloodGroup"
+                        value={formData.blood_group || ""}
+                        onChange={(e) => setFormData({ ...formData, blood_group: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200"
+                      />
+                    </div>
+                    <div>
+                      <Label className="block text-gray-700 mb-1 font-medium">Address</Label>
+                      <Input
+                        type="text"
+                        name="address"
+                        placeholder="Enter full address (House No, Street, City)"
+                        value={formData.address || ""}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        className="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {["doctor", "nurse"].includes(formData.role_name || "") && (
+                  <div>
+                    <Label>Department</Label>
+                    <Select
+                      value={selectedDept}
+                      onValueChange={(value) => {
+                        setSelectedDept(value)
+                        setFormData({ ...formData, department_id: Number(value) })
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept: any) => (
+                          <SelectItem key={dept.id ?? dept.department_id} value={String(dept.id ?? dept.department_id)}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {formData.role_name === "patient" && (
+                  <div>
+                    <Label className="block text-gray-700 mb-1 font-medium">Emergency Contact</Label>
+                    <Input
+                      type="text"
+                      name="emergencyContact"
+                      placeholder="e.g., +91 9876543210"
+                      value={formData.emergency_contact || ""}
+                      onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
+                      className="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200"
+                    />
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" disabled={isSubmitting}>
                   {isSubmitting ? "Creating..." : "Create User"}
@@ -294,18 +433,12 @@ export default function UsersPage() {
           </CardContent>
         </Card>
 
-        {/* ===== Scrollable Tabs ===== */}
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
           <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100">
             <TabsList className="flex w-max min-w-full gap-2 bg-muted rounded-lg p-2">
               {Object.entries(counts).map(([role, count]) => (
-                <TabsTrigger
-                  key={role}
-                  value={role}
-                  className="data-[state=active]:bg-background data-[state=active]:shadow-sm 
-                  px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap border border-transparent 
-                  hover:bg-background transition-colors"
-                >
+                <TabsTrigger key={role} value={role} className="data-[state=active]:bg-background data-[state=active]:shadow-sm px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap border border-transparent hover:bg-background transition-colors">
                   {role.charAt(0).toUpperCase() + role.slice(1)} ({count})
                 </TabsTrigger>
               ))}
@@ -336,7 +469,9 @@ export default function UsersPage() {
                         </p>
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Button variant="outline" size="sm">Edit</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(user)}>
+                          <EditIcon className="mr-2 h-4 w-4" /> Edit
+                        </Button>
                         <Button variant="secondary" size="sm" onClick={() => handleUserClick(user)}>View</Button>
                         <Button variant="destructive" size="sm">Deactivate</Button>
                       </div>
@@ -348,12 +483,12 @@ export default function UsersPage() {
           ))}
         </Tabs>
 
-        {/* ===== User Details Dialog ===== */}
+        {/* User Details Dialog */}
         {selectedUser && (
           <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{selectedUser.role?.toUpperCase()} DETAILS</DialogTitle>
+                <DialogTitle>{selectedUser.role_name?.toUpperCase()} DETAILS</DialogTitle>
                 <DialogDescription>Complete profile information</DialogDescription>
               </DialogHeader>
               <div className="space-y-3 text-sm">
@@ -366,6 +501,105 @@ export default function UsersPage() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Edit User Dialog */}
+        {/* Edit User Dialog */}
+<Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditData(null); } }}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Edit User</DialogTitle>
+    </DialogHeader>
+
+    <form onSubmit={handleUpdateUser} className="space-y-4">
+      <div>
+        <Label>Full Name</Label>
+        <Input
+          value={editData?.name || ""}
+          onChange={(e) => setEditData((d) => ({ ...(d || {}), name: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <Label>Email</Label>
+        <Input
+          value={editData?.email || ""}
+          onChange={(e) => setEditData((d) => ({ ...(d || {}), email: e.target.value }))}
+        />
+      </div>
+
+      <div>
+        <Label>Phone</Label>
+        <Input
+          value={editData?.phone || ""}
+          onChange={(e) => setEditData((d) => ({ ...(d || {}), phone: e.target.value }))}
+        />
+      </div>
+
+      {/* Conditional fields */}
+      {editData?.role_name === "doctor" && (
+        <div>
+          <Label>Specialization</Label>
+          <Input
+            value={editData?.specialization || ""}
+            onChange={(e) => setEditData((d) => ({ ...(d || {}), specialization: e.target.value }))}
+          />
+        </div>
+      )}
+
+      {["doctor", "nurse"].includes(editData?.role_name || "") && (
+        <div>
+          <Label>Department</Label>
+          <Select
+            value={String(editData?.department_id ?? "")}
+            onValueChange={(value) => setEditData((d) => ({ ...(d || {}), department_id: Number(value) }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Department" />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((dept) => (
+                <SelectItem key={dept.department_id ?? dept.department_id} value={String(dept.department_id ?? dept.department_id)}>
+                  {dept.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {editData?.role_name === "patient" && (
+        <>
+          <div>
+            <Label>Blood Group</Label>
+            <Input
+              value={editData?.blood_group || ""}
+              onChange={(e) => setEditData((d) => ({ ...(d || {}), bloodGroup: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label>Address</Label>
+            <Input
+              value={editData?.address || ""}
+              onChange={(e) => setEditData((d) => ({ ...(d || {}), address: e.target.value }))}
+            />
+          </div>
+          <div>
+            <Label>Emergency Contact</Label>
+            <Input
+              value={editData?.emergency_contact || ""}
+              onChange={(e) => setEditData((d) => ({ ...(d || {}), emergencyContact: e.target.value }))}
+            />
+          </div>
+        </>
+      )}
+
+      <Button type="submit" className="w-full" disabled={isSubmitting}>
+        {isSubmitting ? "Updating..." : "Save Changes"}
+      </Button>
+    </form>
+  </DialogContent>
+</Dialog>
+
       </div>
     </DashboardLayout>
   )

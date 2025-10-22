@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { pool } from "../config/db.js";
+import { pool } from "../config/db";
 
 // Get all roles
 export const getRoles = async (req: Request, res: Response) => {
