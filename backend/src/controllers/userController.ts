@@ -15,7 +15,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       phone,
       avatar,
       specialization,
-      departmentId, // 👈 still read from req.body in camelCase
+      department_id, // 👈 still read from req.body in camelCase
       dateOfBirth,
       blood_group,
       address,
@@ -56,7 +56,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         phone,
         avatar,
         specialization,
-        departmentId, // 👈 still passed as parameter value
+        department_id, // 👈 still passed as parameter value
         dateOfBirth,
         blood_group,
         address,

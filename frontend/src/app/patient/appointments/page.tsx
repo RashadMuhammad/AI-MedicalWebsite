@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent } from "@/components/ui/card"
@@ -15,15 +13,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { Calendar, Clock, Video, User, Plus, Filter } from "lucide-react"
 import { mockAppointments } from "@/lib/mock-data"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { apiFetch } from "@/lib/api"
 
 function PatientNavigation() {
   const navItems = [
@@ -55,7 +54,6 @@ export default function AppointmentsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isBookingOpen, setIsBookingOpen] = useState(false)
 
-  // Form state
   const [formData, setFormData] = useState({
     doctor: "",
     date: "",
@@ -64,10 +62,75 @@ export default function AppointmentsPage() {
     reason: "",
   })
 
-  const patientAppointments = mockAppointments.filter((apt) => apt.patientId === user?.id)
+  const [doctors, setDoctors] = useState<any[]>([])
+  const [times, setTimes] = useState<any[]>([])
 
-  const filteredAppointments =
-    filterStatus === "all" ? patientAppointments : patientAppointments.filter((apt) => apt.status === filterStatus)
+  const dayMap: Record<number, string> = {
+    0: "Sunday",
+    1: "Monday",
+    2: "Tuesday",
+    3: "Wednesday",
+    4: "Thursday",
+    5: "Friday",
+    6: "Saturday",
+  }
+
+  // Fetch all doctors
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const { data } = await apiFetch("/api/doctor/doctors-with-department")
+        if (data.success) setDoctors(data.data)
+      } catch (err) {
+        console.error("Error fetching doctors:", err)
+      }
+    }
+    fetchDoctors()
+  }, [])
+
+  // Fetch available times when doctor or date changes
+ useEffect(() => {
+  const fetchTimes = async () => {
+    if (!formData.doctor || !formData.date) {
+      setTimes([]);
+      return;
+    }
+
+    try {
+      const { data } = await apiFetch("/api/doctor/availability");
+ console.log("sbjhfkerf",data)
+      if (data.success) {
+        const selectedDay = dayMap[new Date(formData.date).getDay()];
+
+        const now = new Date();
+
+        const filtered = data.data.filter((t: any) => {
+          const isSameDoctor = t.doctor_id === formData.doctor;
+          const isSameDay = t.day_of_week === selectedDay;
+          const isAvailable = t.is_available;
+
+          // Convert to full datetime for comparison only if date is today
+          const slotStart = new Date(`${formData.date}T${t.start_time}`);
+
+          const isFuture =
+            formData.date === now.toISOString().split("T")[0]
+              ? slotStart > now // if same day, exclude past times
+              : true; // otherwise allow all
+
+          return isSameDoctor && isSameDay && isAvailable && isFuture;
+        });
+
+        console.log("Filtered Times →", filtered);
+        setTimes(filtered);
+      }
+    } catch (error) {
+      console.error("Error fetching times:", error);
+    }
+  };
+
+  fetchTimes();
+}, [formData.doctor, formData.date]);
+
 
   const handleBookAppointment = (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,16 +140,25 @@ export default function AppointmentsPage() {
     })
     setIsBookingOpen(false)
     setFormData({ doctor: "", date: "", time: "", type: "", reason: "" })
+    setTimes([])
   }
+
+  const patientAppointments = mockAppointments.filter((apt) => apt.patientId === user?.id)
+  const filteredAppointments =
+    filterStatus === "all"
+      ? patientAppointments
+      : patientAppointments.filter((apt) => apt.status === filterStatus)
 
   return (
     <DashboardLayout navigation={<PatientNavigation />}>
       <div className="space-y-6">
+        {/* Header & Book Appointment */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
             <p className="text-muted-foreground">Manage your medical appointments</p>
           </div>
+
           <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -100,51 +172,95 @@ export default function AppointmentsPage() {
                 <DialogDescription>Schedule a consultation with a doctor</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleBookAppointment} className="space-y-4">
+                {/* Doctor Select */}
                 <div className="space-y-2">
-                  <Label htmlFor="doctor">Select Doctor</Label>
-                  <Select value={formData.doctor} onValueChange={(v) => setFormData({ ...formData, doctor: v })}>
+                  <Label>Select Doctor</Label>
+                  <Select
+                    value={formData.doctor}
+                    onValueChange={(v) => setFormData({ ...formData, doctor: v, time: "" })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Choose a doctor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="d1">Dr. Sarah Smith - Cardiology</SelectItem>
-                      <SelectItem value="d2">Dr. Michael Johnson - General Medicine</SelectItem>
-                      <SelectItem value="d3">Dr. Emily Brown - Pediatrics</SelectItem>
+                      {doctors.length > 0 ? (
+                        doctors.map((doc) => (
+                          <SelectItem key={doc.doctor_id} value={String(doc.doctor_id)}>
+                            {doc.doctor_name} - {doc.department_name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="loading" disabled>
+                          Loading doctors...
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* Date Input */}
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
+                  <Label>Date</Label>
                   <Input
-                    id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value, time: "" })}
                     required
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="time">Time</Label>
-                  <Select value={formData.time} onValueChange={(v) => setFormData({ ...formData, time: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="09:00">09:00 AM</SelectItem>
-                      <SelectItem value="10:00">10:00 AM</SelectItem>
-                      <SelectItem value="11:00">11:00 AM</SelectItem>
-                      <SelectItem value="14:00">02:00 PM</SelectItem>
-                      <SelectItem value="15:00">03:00 PM</SelectItem>
-                      <SelectItem value="16:00">04:00 PM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <div className="space-y-2">
+  <Label>Select Available Time</Label>
+  <Select
+    value={formData.time}
+    onValueChange={(v) => setFormData((prev) => ({ ...prev, time: v }))}
+  >
+    <SelectTrigger>
+      <SelectValue
+        placeholder={
+          !formData.doctor
+            ? "Select a doctor first"
+            : !formData.date
+            ? "Select a date first"
+            : "Select available slot"
+        }
+      />
+    </SelectTrigger>
+    <SelectContent>
+      {formData.doctor && formData.date ? (
+        times.length > 0 ? (
+          times.map((t) => (
+            <SelectItem
+              key={t.id}
+              value={`${t.day_of_week}-${t.start_time}-${t.end_time}`}
+            >
+              🗓 {t.day_of_week} — ⏰ {t.start_time.slice(0, 5)} - {t.end_time.slice(0, 5)}
+              {t.room_number ? ` 🏥 (Room ${t.room_number})` : ""}
+            </SelectItem>
+          ))
+        ) : (
+          <SelectItem value="no-times" disabled>
+            No available times
+          </SelectItem>
+        )
+      ) : (
+        <SelectItem value="no-doctor" disabled>
+          Select doctor and date first
+        </SelectItem>
+      )}
+    </SelectContent>
+  </Select>
+</div>
 
+
+
+                {/* Appointment Type */}
                 <div className="space-y-2">
-                  <Label htmlFor="type">Appointment Type</Label>
-                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                  <Label>Appointment Type</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(v) => setFormData({ ...formData, type: v })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -157,10 +273,10 @@ export default function AppointmentsPage() {
                   </Select>
                 </div>
 
+                {/* Reason */}
                 <div className="space-y-2">
-                  <Label htmlFor="reason">Reason for Visit</Label>
+                  <Label>Reason for Visit</Label>
                   <Textarea
-                    id="reason"
                     placeholder="Describe your symptoms or reason for visit"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -231,8 +347,8 @@ export default function AppointmentsPage() {
                           appointment.status === "scheduled"
                             ? "default"
                             : appointment.status === "completed"
-                              ? "secondary"
-                              : "destructive"
+                            ? "secondary"
+                            : "destructive"
                         }
                       >
                         {appointment.status}

@@ -5,6 +5,9 @@ import { pool } from "./config/db";
 import userRoutes from "./routes/userRoutes";
 import userRoleRoutes from "./routes/userRoleRoutes";
 import departmentRoutes from "./routes/departmentRoutes"
+import doctorRoutes from "./routes/doctorRoutes"
+
+
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,5 +23,6 @@ app.get("/", async (_req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/roles", userRoleRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/doctor",doctorRoutes);
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

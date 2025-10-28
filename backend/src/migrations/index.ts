@@ -2,6 +2,7 @@ import { pool } from "../config/db";
 import { createUsersRolesTable } from "./001_create_user_roles";
 import { createUsersTable } from "./002_create_users";
 import { createDepartmentsTable } from  './003_create_departments'
+import { createDoctorAvailabilityTable } from "./004_create_doctor_availability";
 async function runMigrations() {
     try {
         console.log("🚀 Starting migrations...");
@@ -10,6 +11,7 @@ async function runMigrations() {
         await createDepartmentsTable();
         // Create users table
         await createUsersTable();
+        await createDoctorAvailabilityTable();
 
         console.log("✅ All migrations completed successfully");
         process.exit(0);

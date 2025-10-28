@@ -36,9 +36,9 @@ const login = async (email: string, password: string) => {
     localStorage.setItem("userRole", data.user.role);
     localStorage.setItem("email", data.user.email);
     localStorage.setItem("name", data.user.name);
+    localStorage.setItem("userId", data.user.id);
 
-
-  return data.user; // return the user object
+     return data.user; // return the user object
 };
 
 
