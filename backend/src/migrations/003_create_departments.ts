@@ -5,7 +5,7 @@ export async function createDepartmentsTable() {
     CREATE TABLE IF NOT EXISTS departments (
       department_id SERIAL PRIMARY KEY,
       name VARCHAR(100) UNIQUE NOT NULL,
-      head_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      head_id UUID,
       doctors_count INT DEFAULT 0,
       patients_count INT DEFAULT 0,
       revenue NUMERIC(12, 2) DEFAULT 0.00,
