@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Activity, LogOut, User, Menu, X } from "lucide-react"
+import { Activity, LogOut, User, Menu, X, Sun, Moon } from "lucide-react"
 import type { ReactNode } from "react"
 
 interface DashboardLayoutProps {
@@ -25,8 +25,48 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
   const { user, logout } = useAuth()
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
   const [userInfo, setUserInfo] = useState<{ name: string; email: string; role: string } | null>(null)
+  const [theme, setTheme] = useState<"light" | "dark">("light")
+
+  // --- Theme Setup ---
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+    if (savedTheme) {
+      setTheme(savedTheme)
+      document.documentElement.classList.toggle("dark", savedTheme === "dark")
+    } else {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+      const initialTheme = prefersDark ? "dark" : "light"
+      setTheme(initialTheme)
+      document.documentElement.classList.toggle("dark", prefersDark)
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light"
+    setTheme(newTheme)
+    localStorage.setItem("theme", newTheme)
+    document.documentElement.classList.toggle("dark", newTheme === "dark")
+  }
+
+  // --- User Info Setup ---
+  useEffect(() => {
+    const name = localStorage.getItem("name") ?? ""
+    const email = localStorage.getItem("email") ?? ""
+    const role = localStorage.getItem("userRole") ?? ""
+
+    if (name && email && role) {
+      setUserInfo({ name, email, role })
+    } else if (user) {
+      const safeName = user.name ?? ""
+      const safeEmail = user.email ?? ""
+      const safeRole = user.role_name ?? ""
+      setUserInfo({ name: safeName, email: safeEmail, role: safeRole })
+      localStorage.setItem("name", safeName)
+      localStorage.setItem("email", safeEmail)
+      localStorage.setItem("userRole", safeRole)
+    }
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -36,53 +76,21 @@ export function DashboardLayout({ children, navigation }: DashboardLayoutProps) 
     router.push("/login")
   }
 
-useEffect(() => {
-  // Fetch user info from localStorage if exists
-  const name = localStorage.getItem("name") ?? ""  // fallback to empty string
-  const email = localStorage.getItem("email") ?? ""
-  const role = localStorage.getItem("userRole") ?? ""
-
-  console.log("tesdd",name,email,role)
-
-  if (name && email && role) {
-    setUserInfo({ name, email, role })
-  } else if (user) {
-    // fallback to auth context and ensure strings
-    const safeName = user.name ?? ""
-    const safeEmail = user.email ?? ""
-    const safeRole = user.role_name ?? ""
-
-    setUserInfo({ name: safeName, email: safeEmail, role: safeRole })
-
-    localStorage.setItem("userName", safeName)
-    localStorage.setItem("userEmail", safeEmail)
-    localStorage.setItem("userRole", safeRole)
-  }
-}, [user])
-
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-  }
+  const getInitials = (name: string) =>
+    name.split(" ").map((n) => n[0]).join("").toUpperCase()
 
   const handleAvatarClick = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent dropdown from toggling
-    if (userInfo) {
-      router.push("/profile")
-    }
+    e.stopPropagation()
+    if (userInfo) router.push("/profile")
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col transition-colors duration-300">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-card">
         <div className="flex h-16 items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-2">
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
               className="md:hidden mr-2 rounded-md p-2 hover:bg-accent"
@@ -102,40 +110,49 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Profile Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div>
-                <Avatar
-                  onClick={handleAvatarClick}
-                  className="cursor-pointer h-10 w-10"
-                >
-                  <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
-                    {userInfo ? getInitials(userInfo.name) : "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{userInfo?.name}</p>
-                  <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
-                  <p className="text-xs font-medium capitalize text-primary">{userInfo?.role}</p>
+          {/* Theme Toggle + Profile */}
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="rounded-full"
+            >
+              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div>
+                  <Avatar onClick={handleAvatarClick} className="cursor-pointer h-10 w-10">
+                    <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
+                      {userInfo ? getInitials(userInfo.name) : "U"}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{userInfo?.name}</p>
+                    <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
+                    <p className="text-xs font-medium capitalize text-primary">{userInfo?.role}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
@@ -146,7 +163,7 @@ useEffect(() => {
           <nav className="space-y-1 p-4">{navigation}</nav>
         </aside>
 
-        {/* Mobile Sidebar (Drawer) */}
+        {/* Mobile Sidebar */}
         <>
           {sidebarOpen && (
             <div
