@@ -8,7 +8,7 @@ export interface User {
   password?: string // for authentication (optional when fetched)
   name: string
   roleId: number // FK to user_roles table
-  role_name?: UserRole // optional populated object from join
+  role_name?: string // optional populated object from join
   phone?: string
   avatar?: string
   specialization?: string // for doctors
