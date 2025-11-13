@@ -103,63 +103,68 @@ export default function UsersPage() {
 
   // Fetch users grouped by role
   const fetchUsersByRole = async (role?: string) => {
-    try {
-      const query = role ? `?role=${role}` : ""
-      const { data } = await apiFetch(`/api/users/by-role${query}`)
-      setUsersByRole(data.data || {})
-    } catch (err) {
-      console.error("Error fetching users by role:", err)
-    }
+  try {
+    const query = role ? `?role=${role}` : ""
+    const { data } = await apiFetch(`/api/users/by-role${query}`)
+    setUsersByRole(data.data || {})
+  } catch (err) {
+    console.error("Error fetching users by role:", err)
+  }
+}
+
+const fetchCounts = async () => {
+  try {
+    const { data } = await apiFetch("/api/users/count-by-role")
+    const countsObj: Record<string, number> = {}
+    data?.data?.forEach((item: any) => {
+      countsObj[item.role_name] = Number(item.user_count)
+    })
+    setCounts(countsObj)
+    const firstRole = Object.keys(countsObj)[0]
+    if (firstRole && !activeTab) setActiveTab(firstRole)
+  } catch (err) {
+    console.error("Error fetching counts:", err)
+  }
+}
+
+const fetchRoles = async () => {
+  try {
+    const { data } = await apiFetch("/api/roles/allroles")
+    setRoles(data)
+  } catch (err) {
+    console.error("Error fetching roles:", err)
+  }
+}
+
+const fetchDepartments = async () => {
+  try {
+    const { data } = await apiFetch("/api/departments")
+    setDepartments(data)
+  } catch (err) {
+    console.error("Error fetching departments:", err)
+  }
+}
+
+// Auto-refresh all
+useEffect(() => {
+  const fetchAll = async () => {
+    await fetchCounts()
+    await fetchUsersByRole(activeTab)
+    await fetchRoles()
+    await fetchDepartments()
   }
 
-  // Fetch counts per role
-  useEffect(() => {
-    const fetchCounts = async () => {
-      try {
-        const { data } = await apiFetch("/api/users/count-by-role")
-        const countsObj: Record<string, number> = {}
-        data?.data?.forEach((item: any) => {
-          countsObj[item.role_name] = Number(item.user_count)
-        })
-        setCounts(countsObj)
-        const firstRole = Object.keys(countsObj)[0]
-        if (firstRole) setActiveTab(firstRole)
-      } catch (err) {
-        console.error("Error fetching counts:", err)
-      }
-    }
-    fetchCounts()
-  }, [])
+  // Initial fetch
+  fetchAll()
 
-  // Fetch all users initially
-  useEffect(() => {
-    fetchUsersByRole()
-  }, [])
+  // Set interval (e.g., every 30 seconds)
+  const intervalId = setInterval(() => {
+    fetchAll()
+  }, 30000) // adjust as needed
 
-  // Fetch all roles & departments
-  useEffect(() => {
-    const fetchRoles = async () => {
-      try {
-        const { data } = await apiFetch("/api/roles/allroles")
-        setRoles(data)
-      } catch (err) {
-        console.error("Error fetching roles:", err)
-      }
-    }
+  return () => clearInterval(intervalId)
+}, [activeTab])
 
-    const fetchDepartments = async () => {
-      try {
-        const { data } = await apiFetch("/api/departments")
-        // adapt to your Department shape (id vs department_id)
-        setDepartments(data)
-      } catch (err) {
-        console.error("Failed to fetch departments:", err)
-      }
-    }
-
-    fetchRoles()
-    fetchDepartments()
-  }, [])
 
   // Handle Add User
   const handleAddUser = async (e: React.FormEvent) => {

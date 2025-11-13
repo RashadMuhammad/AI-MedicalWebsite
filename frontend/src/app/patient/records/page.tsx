@@ -62,7 +62,7 @@ export default function MedicalRecordsPage() {
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Blood Group</p>
-                <p className="text-lg font-semibold">{user?.bloodGroup || "Not specified"}</p>
+                <p className="text-lg font-semibold">{user?.blood_group || "Not specified"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Date of Birth</p>

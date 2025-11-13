@@ -4,6 +4,7 @@ import { createUsersTable } from "./002_create_users";
 import { createDepartmentsTable } from './003_create_departments'
 import { createDoctorAvailabilityTable } from "./004_create_doctor_availability";
 import { addForeignKeyToUsers } from "./005_add_fk";
+import { createAppointmentsTable } from "./006_create_appointments";
 async function runMigrations() {
     try {
         console.log("🚀 Starting migrations...");
@@ -12,7 +13,8 @@ async function runMigrations() {
         await createDepartmentsTable();         // 2️⃣ departments first
         await createUsersTable();               // 3️⃣ users next (can reference departments)
         await createDoctorAvailabilityTable();  // 4️⃣ doctor availability
-        await addForeignKeyToUsers();           // 5️⃣ any post-fk setup
+        await addForeignKeyToUsers(); 
+        await createAppointmentsTable();          // 5️⃣ any post-fk setup
 
         console.log("✅ All migrations completed successfully");
         process.exit(0);

@@ -14,7 +14,7 @@ type Status = {
 } | null;
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState<Partial<User>>({ role: "patient" })
+  const [formData, setFormData] = useState<Partial<User>>({ role_name: "patient" })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [status, setStatus] = useState<Status>(null)
 
@@ -40,18 +40,17 @@ export default function RegisterPage() {
       if (res.status === 201) {
         setStatus({ type: "success", message: data.message || "User created!" })
         setFormData({
-          role: "patient",
+          role_name: "patient",
           name: "",
           email: "",
           password: "",
           phone: "",
           dateOfBirth: "",
-          bloodGroup: "",
+          blood_group: "",
           address: "",
-          emergencyContact: "",
+          emergency_contact: "",
           avatar: "",
           specialization: "",
-          department: "",
         })
       } else if (res.status === 400) {
         setStatus({ type: "warning", message: data.error || "Invalid input" })
@@ -82,13 +81,12 @@ export default function RegisterPage() {
         {/* Status Popup */}
         {status && (
           <div
-            className={`p-3 rounded-md mb-4 text-white ${
-              status.type === "success"
+            className={`p-3 rounded-md mb-4 text-white ${status.type === "success"
                 ? "bg-green-500"
                 : status.type === "warning"
-                ? "bg-yellow-500"
-                : "bg-red-500"
-            }`}
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
+              }`}
           >
             {status.message}
           </div>
@@ -162,12 +160,13 @@ export default function RegisterPage() {
           <Label className="block text-gray-700 mb-1 font-medium">Blood Group</Label>
           <Input
             type="text"
-            name="bloodGroup"
-            value={formData.bloodGroup || ""}
+            name="blood_group"
+            value={formData.blood_group || ""}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200"
           />
         </div>
+
 
         {/* Address */}
         <div>
@@ -186,8 +185,8 @@ export default function RegisterPage() {
           <Label className="block text-gray-700 mb-1 font-medium">Emergency Contact</Label>
           <Input
             type="text"
-            name="emergencyContact"
-            value={formData.emergencyContact || ""}
+            name="emergency_contact"
+            value={formData.emergency_contact || ""}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-200"
           />

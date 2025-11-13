@@ -19,10 +19,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Calendar, Clock, Video, User, Plus, Filter } from "lucide-react"
-import { mockAppointments } from "@/lib/mock-data"
-import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
 import { apiFetch } from "@/lib/api"
+import { Appointment } from "@/lib/types"
 
 function PatientNavigation() {
   const navItems = [
@@ -48,11 +48,24 @@ function PatientNavigation() {
   )
 }
 
+function formatTimeTo12Hour(time24: string) {
+  if (!time24) return "";
+  const [hourStr, minute] = time24.split(":");
+  let hour = parseInt(hourStr, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${minute} ${ampm}`;
+}
+
 export default function AppointmentsPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isBookingOpen, setIsBookingOpen] = useState(false)
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [doctors, setDoctors] = useState<any[]>([])
+  const [times, setTimes] = useState<any[]>([])
 
   const [formData, setFormData] = useState({
     doctor: "",
@@ -62,18 +75,26 @@ export default function AppointmentsPage() {
     reason: "",
   })
 
-  const [doctors, setDoctors] = useState<any[]>([])
-  const [times, setTimes] = useState<any[]>([])
+  // Fetch all appointments for logged-in patient
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const { data } = await apiFetch("/api/appointments")
+        const userID = localStorage.getItem("userId")
 
-  const dayMap: Record<number, string> = {
-    0: "Sunday",
-    1: "Monday",
-    2: "Tuesday",
-    3: "Wednesday",
-    4: "Thursday",
-    5: "Friday",
-    6: "Saturday",
-  }
+        if (data.success) {
+          const allAppointments = data.data
+          const myAppointments = allAppointments.filter(
+            (apt: any) => apt.patient_id === userID
+          )
+          setAppointments(myAppointments)
+        }
+      } catch (error) {
+        console.error("Error fetching appointments:", error)
+      }
+    }
+    fetchAppointments()
+  }, [])
 
   // Fetch all doctors
   useEffect(() => {
@@ -89,70 +110,115 @@ export default function AppointmentsPage() {
   }, [])
 
   // Fetch available times when doctor or date changes
- useEffect(() => {
-  const fetchTimes = async () => {
-    if (!formData.doctor || !formData.date) {
-      setTimes([]);
-      return;
+  useEffect(() => {
+    const fetchTimes = async () => {
+      if (!formData.doctor) {
+        setTimes([])
+        return
+      }
+      try {
+        const { data } = await apiFetch(`/api/doctor/${formData.doctor}`)
+        if (data.success && data.data.length > 0) {
+          let filtered = data.data.filter((t: any) => t.is_available)
+
+          // If a date is selected, filter by day
+          if (formData.date) {
+            const selectedDate = new Date(formData.date)
+            const dayMap: Record<number, string> = {
+              0: "Sunday",
+              1: "Monday",
+              2: "Tuesday",
+              3: "Wednesday",
+              4: "Thursday",
+              5: "Friday",
+              6: "Saturday",
+            }
+            const selectedDay = dayMap[selectedDate.getDay()]
+            filtered = filtered.filter((t: any) => t.day_of_week.trim() === selectedDay)
+          }
+
+          setTimes(filtered)
+        } else {
+          setTimes([])
+        }
+      } catch (error) {
+        console.error("Error fetching times:", error)
+        setTimes([])
+      }
+    }
+
+    fetchTimes()
+  }, [formData.doctor, formData.date])
+
+  // Book Appointment
+  const handleBookAppointment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const userID = localStorage.getItem("userId")
+
+    if (!formData.doctor || !formData.date || !formData.time || !formData.type) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      })
+      return
     }
 
     try {
-      const { data } = await apiFetch("/api/doctor/availability");
- console.log("sbjhfkerf",data)
-      if (data.success) {
-        const selectedDay = dayMap[new Date(formData.date).getDay()];
+      const payload = {
+        doctor_id: formData.doctor,
+        patient_id: userID,
+        appointment_date: formData.date,
+        start_time: formData.time.split("-")[0],
+        end_time: formData.time.split("-")[1],
+        appointment_type: formData.type,
+        reason: formData.reason,
+      }
 
-        const now = new Date();
+      const { res, data } = await apiFetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-        const filtered = data.data.filter((t: any) => {
-          const isSameDoctor = t.doctor_id === formData.doctor;
-          const isSameDay = t.day_of_week === selectedDay;
-          const isAvailable = t.is_available;
+      if (res.status === 201) {
+        toast({ title: "✅ Appointment Booked" })
+        setIsBookingOpen(false)
+        setFormData({ doctor: "", date: "", time: "", type: "", reason: ""})
+        setTimes([])
 
-          // Convert to full datetime for comparison only if date is today
-          const slotStart = new Date(`${formData.date}T${t.start_time}`);
-
-          const isFuture =
-            formData.date === now.toISOString().split("T")[0]
-              ? slotStart > now // if same day, exclude past times
-              : true; // otherwise allow all
-
-          return isSameDoctor && isSameDay && isAvailable && isFuture;
-        });
-
-        console.log("Filtered Times →", filtered);
-        setTimes(filtered);
+        // refresh appointments list
+        const { data: newData } = await apiFetch("/api/appointments")
+        setAppointments(newData.data)
+      } else {
+        toast({
+          title: "❌ Booking Failed",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.error("Error fetching times:", error);
+      console.error("Error booking appointment:", error)
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      })
     }
-  };
-
-  fetchTimes();
-}, [formData.doctor, formData.date]);
-
-
-  const handleBookAppointment = (e: React.FormEvent) => {
-    e.preventDefault()
-    toast({
-      title: "Appointment Booked",
-      description: "Your appointment has been scheduled successfully.",
-    })
-    setIsBookingOpen(false)
-    setFormData({ doctor: "", date: "", time: "", type: "", reason: "" })
-    setTimes([])
   }
 
-  const patientAppointments = mockAppointments.filter((apt) => apt.patientId === user?.id)
+  // Filter appointments
   const filteredAppointments =
     filterStatus === "all"
-      ? patientAppointments
-      : patientAppointments.filter((apt) => apt.status === filterStatus)
+      ? appointments
+      : appointments.filter(
+        (apt) => apt.status.toLowerCase() === filterStatus.toLowerCase()
+      )
 
   return (
     <DashboardLayout navigation={<PatientNavigation />}>
       <div className="space-y-6">
-        {/* Header & Book Appointment */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
@@ -161,44 +227,37 @@ export default function AppointmentsPage() {
 
           <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Book Appointment
+              <Button onClick={() => setIsBookingOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" /> Book Appointment
               </Button>
             </DialogTrigger>
+
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Book New Appointment</DialogTitle>
                 <DialogDescription>Schedule a consultation with a doctor</DialogDescription>
               </DialogHeader>
+
               <form onSubmit={handleBookAppointment} className="space-y-4">
-                {/* Doctor Select */}
+                {/* Doctor */}
                 <div className="space-y-2">
                   <Label>Select Doctor</Label>
                   <Select
                     value={formData.doctor}
                     onValueChange={(v) => setFormData({ ...formData, doctor: v, time: "" })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a doctor" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Choose a doctor" /></SelectTrigger>
                     <SelectContent>
-                      {doctors.length > 0 ? (
-                        doctors.map((doc) => (
-                          <SelectItem key={doc.doctor_id} value={String(doc.doctor_id)}>
-                            {doc.doctor_name} - {doc.department_name}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="loading" disabled>
-                          Loading doctors...
+                      {doctors.length > 0 ? doctors.map((doc) => (
+                        <SelectItem key={doc.doctor_id} value={String(doc.doctor_id)}>
+                          {doc.doctor_name} - {doc.department_name}
                         </SelectItem>
-                      )}
+                      )) : <SelectItem value="loading" disabled>Loading...</SelectItem>}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Date Input */}
+                {/* Date */}
                 <div className="space-y-2">
                   <Label>Date</Label>
                   <Input
@@ -209,61 +268,28 @@ export default function AppointmentsPage() {
                   />
                 </div>
 
-            <div className="space-y-2">
-  <Label>Select Available Time</Label>
-  <Select
-    value={formData.time}
-    onValueChange={(v) => setFormData((prev) => ({ ...prev, time: v }))}
-  >
-    <SelectTrigger>
-      <SelectValue
-        placeholder={
-          !formData.doctor
-            ? "Select a doctor first"
-            : !formData.date
-            ? "Select a date first"
-            : "Select available slot"
-        }
-      />
-    </SelectTrigger>
-    <SelectContent>
-      {formData.doctor && formData.date ? (
-        times.length > 0 ? (
-          times.map((t) => (
-            <SelectItem
-              key={t.id}
-              value={`${t.day_of_week}-${t.start_time}-${t.end_time}`}
-            >
-              🗓 {t.day_of_week} — ⏰ {t.start_time.slice(0, 5)} - {t.end_time.slice(0, 5)}
-              {t.room_number ? ` 🏥 (Room ${t.room_number})` : ""}
-            </SelectItem>
-          ))
-        ) : (
-          <SelectItem value="no-times" disabled>
-            No available times
-          </SelectItem>
-        )
-      ) : (
-        <SelectItem value="no-doctor" disabled>
-          Select doctor and date first
-        </SelectItem>
-      )}
-    </SelectContent>
-  </Select>
-</div>
+                {/* Time */}
+                <div className="space-y-2">
+                  <Label>Select Available Time</Label>
+                  <Select value={formData.time} onValueChange={(v) => setFormData(prev => ({ ...prev, time: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={!formData.doctor ? "Select doctor first" : !formData.date ? "Select date first" : "Select time"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {times.length > 0 ? times.map((t) => (
+                        <SelectItem key={t.id} value={`${t.start_time}-${t.end_time}`}>
+                          {formatTimeTo12Hour(t.start_time)} - {formatTimeTo12Hour(t.end_time)} ({t.day_of_week})
+                        </SelectItem>
+                      )) : <SelectItem value="none" disabled>No available slots</SelectItem>}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-
-
-                {/* Appointment Type */}
+                {/* Type */}
                 <div className="space-y-2">
                   <Label>Appointment Type</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(v) => setFormData({ ...formData, type: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
+                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="consultation">Consultation</SelectItem>
                       <SelectItem value="follow-up">Follow-up</SelectItem>
@@ -277,16 +303,14 @@ export default function AppointmentsPage() {
                 <div className="space-y-2">
                   <Label>Reason for Visit</Label>
                   <Textarea
-                    placeholder="Describe your symptoms or reason for visit"
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                    placeholder="Describe your symptoms or reason"
                     required
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Confirm Booking
-                </Button>
+                <Button type="submit" className="w-full">Confirm Booking</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -302,7 +326,7 @@ export default function AppointmentsPage() {
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Appointments</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="scheduled">Scheduled</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -312,64 +336,48 @@ export default function AppointmentsPage() {
           </CardContent>
         </Card>
 
-        {/* Appointments List */}
+        {/* Appointment List */}
         <div className="space-y-4">
           {filteredAppointments.length > 0 ? (
-            filteredAppointments.map((appointment) => (
-              <Card key={appointment.id}>
-                <CardContent className="pt-6">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                        <Calendar className="h-6 w-6 text-primary" />
+            filteredAppointments.map((apt) => (
+              <Card key={apt.appointment_id}>
+                <CardContent className="pt-6 flex justify-between items-center">
+                  <div>
+                    <h3 className="font-semibold">{apt.doctor_name}</h3>
+                    <Badge variant="outline">{apt.appointment_type}</Badge>
+                    <p className="text-sm text-muted-foreground">{apt.reason}</p>
+                    <div className="flex gap-4 text-sm text-muted-foreground mt-2">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" /> {apt.appointment_date}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{appointment.doctorName}</h3>
-                          <Badge variant="outline">{appointment.type}</Badge>
-                        </div>
-                        <p className="mt-1 text-sm text-muted-foreground">{appointment.reason}</p>
-                        <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {appointment.date}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {appointment.time}
-                          </div>
-                        </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatTimeTo12Hour(apt.start_time)} - {formatTimeTo12Hour(apt.end_time)}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant={
-                          appointment.status === "scheduled"
-                            ? "default"
-                            : appointment.status === "completed"
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        apt.status === "scheduled"
+                          ? "default"
+                          : apt.status === "completed"
                             ? "secondary"
                             : "destructive"
-                        }
-                      >
-                        {appointment.status}
-                      </Badge>
-                      {appointment.status === "scheduled" && (
-                        <div className="flex gap-2">
-                          {appointment.type === "teleconsultation" && (
-                            <Button size="sm">
-                              <Video className="mr-2 h-4 w-4" />
-                              Join
-                            </Button>
-                          )}
-                          <Button size="sm" variant="outline">
-                            Reschedule
-                          </Button>
-                          <Button size="sm" variant="destructive">
-                            Cancel
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                      }
+                    >
+                      {apt.status}
+                    </Badge>
+                    {apt.status === "scheduled" && (
+                      <div className="flex gap-2">
+                        {apt.appointment_type === "teleconsultation" && (
+                          <Button size="sm"><Video className="mr-2 h-4 w-4" />Join</Button>
+                        )}
+                        <Button size="sm" variant="outline">Reschedule</Button>
+                        <Button size="sm" variant="destructive">Cancelled</Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

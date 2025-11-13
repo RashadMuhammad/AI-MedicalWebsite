@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes";
 import userRoleRoutes from "./routes/userRoleRoutes";
 import departmentRoutes from "./routes/departmentRoutes"
 import doctorRoutes from "./routes/doctorRoutes"
+import appointmentsRoutes from "./routes/appointmentsRoutes"
 
 
 dotenv.config();
@@ -24,5 +25,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/roles", userRoleRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/doctor",doctorRoutes);
+app.use("/api/appointments",appointmentsRoutes);
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

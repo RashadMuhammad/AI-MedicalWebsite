@@ -27,17 +27,19 @@ export interface User {
 
 // Appointment interface
 export interface Appointment {
-  id: string
+  appointment_id: string
   patientId: string
-  patientName: string
+  patientname: string
   doctorId: string
-  doctorName: string
-  date: string
+  doctor_name: string
+  appointment_date: string
   time: string
-  type: "consultation" | "follow-up" | "emergency" | "teleconsultation"
+  appointment_type: "consultation" | "follow-up" | "emergency" | "teleconsultation"
   status: "scheduled" | "completed" | "cancelled" | "in-progress"
   reason: string
   notes?: string
+  start_time:string
+  end_time:string
 }
 
 // Medical Record interface
@@ -127,3 +129,7 @@ export interface DoctorAvailability {
   created_at?: string
   updated_at?: string
 }
+
+
+
+

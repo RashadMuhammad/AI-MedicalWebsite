@@ -50,7 +50,7 @@ useEffect(() => {
     // fallback to auth context and ensure strings
     const safeName = user.name ?? ""
     const safeEmail = user.email ?? ""
-    const safeRole = user.role ?? ""
+    const safeRole = user.role_name ?? ""
 
     setUserInfo({ name: safeName, email: safeEmail, role: safeRole })
 
