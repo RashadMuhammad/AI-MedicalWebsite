@@ -197,7 +197,11 @@ export default function SchedulePage() {
               <Button variant="outline">Set Availability</Button>
             </Dialog.Trigger>
             <Dialog.Portal>
-              <Dialog.Overlay className="fixed inset-0 bg-black/50" />
+              <Dialog.Overlay
+                className="    fixed inset-0
+    bg-gradient-to-b from-black/10 to-black/30
+    z-[9998]"
+              />
               <Dialog.Content
                 className="
     fixed top-1/2 left-1/2 w-[400px]
@@ -206,6 +210,7 @@ export default function SchedulePage() {
     bg-white dark:bg-neutral-900
     text-black dark:text-white
     p-6 shadow-lg
+    z-[9999]
   "
               >
                 <Dialog.Title className="text-lg font-bold">
