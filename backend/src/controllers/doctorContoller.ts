@@ -22,7 +22,7 @@ export const createAvailability = async (req: Request, res: Response) => {
         data.start_time,
         data.end_time,
         data.room_number || null,
-        data.is_available ?? true // default to true if not provided
+        data.is_available ?? true 
       ]
     )
 
@@ -35,7 +35,7 @@ export const createAvailability = async (req: Request, res: Response) => {
 
 // Get all availability for a doctor
 export const getDoctorAvailability = async (req: Request, res: Response) => {
-  let doctor_id = req.params.doctor_id?.trim(); // ✅ Remove spaces or newlines
+  let doctor_id = req.params.doctor_id?.trim(); 
 
   if (!doctor_id) {
     return res.status(400).json({ success: false, error: "Doctor ID is required" });

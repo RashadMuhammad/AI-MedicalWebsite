@@ -279,7 +279,7 @@ const handleManageStaffClick = async (deptId: string) => {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                {/* <div className="grid grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="doctors">Doctors</Label>
                     <Input
@@ -309,7 +309,7 @@ const handleManageStaffClick = async (deptId: string) => {
                       onChange={(e) => setNewDept({ ...newDept, revenue: e.target.value })}
                     />
                   </div>
-                </div>
+                </div> */}
 
                 <Button type="submit" className="w-full">Save Department</Button>
               </form>

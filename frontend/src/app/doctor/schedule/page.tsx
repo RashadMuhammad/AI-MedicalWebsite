@@ -1,17 +1,23 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, Users, FileText, Activity } from "lucide-react"
-import * as Dialog from "@radix-ui/react-dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useAuth } from "@/lib/auth-context"
-import { apiFetch } from "@/lib/api"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, Users, FileText, Activity } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth-context";
+import { apiFetch } from "@/lib/api";
 
 // ------------------ MOCK DATA ------------------
 const mockAppointments = [
@@ -55,7 +61,7 @@ const mockAppointments = [
     time: "16:00 - 16:30",
     type: "in-person",
   },
-]
+];
 
 // ------------------ NAVIGATION ------------------
 function DoctorNavigation() {
@@ -66,7 +72,7 @@ function DoctorNavigation() {
     { href: "/doctor/records", icon: FileText, label: "Medical Records" },
     { href: "/doctor/prescriptions", icon: FileText, label: "Prescriptions" },
     { href: "/doctor/schedule", icon: Clock, label: "Schedule" },
-  ]
+  ];
 
   return (
     <>
@@ -79,60 +85,62 @@ function DoctorNavigation() {
         </Link>
       ))}
     </>
-  )
+  );
 }
 
 // ------------------ MAIN COMPONENT ------------------
 export default function SchedulePage() {
-  const { user } = useAuth()
-      const doctorId = localStorage.getItem("userId")
+  const { user } = useAuth();
+  const doctorId = localStorage.getItem("userId");
 
   // Filter appointments for logged-in doctor
-  const doctorAppointments = mockAppointments.filter((apt) => apt.doctorId === doctorId)
+  const doctorAppointments = mockAppointments.filter(
+    (apt) => apt.doctorId === doctorId
+  );
 
   // Group appointments by date
   const appointmentsByDate = doctorAppointments.reduce((acc, apt) => {
-    if (!acc[apt.date]) acc[apt.date] = []
-    acc[apt.date].push(apt)
-    return acc
-  }, {} as Record<string, typeof doctorAppointments>)
+    if (!acc[apt.date]) acc[apt.date] = [];
+    acc[apt.date].push(apt);
+    return acc;
+  }, {} as Record<string, typeof doctorAppointments>);
 
   // ------------------ AVAILABILITY ------------------
-  const [availability, setAvailability] = useState<any[]>([])
+  const [availability, setAvailability] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     day: "Monday",
     start: "09:00",
     end: "17:00",
     room: "",
     available: true,
-  })
+  });
 
   // Fetch availability from backend
   useEffect(() => {
     const fetchAvailability = async () => {
       try {
-        const doctorId = localStorage.getItem("userId")
-        if (!doctorId) return
+        const doctorId = localStorage.getItem("userId");
+        if (!doctorId) return;
 
-        const response = await apiFetch(`/api/doctor/${doctorId}`)
+        const response = await apiFetch(`/api/doctor/${doctorId}`);
         if (response.data?.success) {
-          setAvailability(response.data.data || [])
+          setAvailability(response.data.data || []);
         }
       } catch (error) {
-        console.error("Error fetching availability:", error)
+        console.error("Error fetching availability:", error);
       }
-    }
+    };
 
-    fetchAvailability()
-  }, [])
+    fetchAvailability();
+  }, []);
 
   // Save new availability
   const handleFormSubmit = async () => {
     try {
-      const doctorId = localStorage.getItem("userId")
+      const doctorId = localStorage.getItem("userId");
       if (!doctorId) {
-        alert("Doctor ID not found — please login again.")
-        return
+        alert("Doctor ID not found — please login again.");
+        return;
       }
 
       const payload = {
@@ -142,36 +150,36 @@ export default function SchedulePage() {
         end_time: formData.end,
         room_number: formData.room,
         is_available: formData.available,
-      }
+      };
 
-      console.log("Sending:", payload)
+      console.log("Sending:", payload);
 
       const response = await apiFetch("/api/doctor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      })
+      });
 
       if (response.data?.success) {
-        setAvailability((prev) => [...prev, response.data.data])
+        setAvailability((prev) => [...prev, response.data.data]);
       } else {
-        alert("Failed to save availability")
+        alert("Failed to save availability");
       }
     } catch (err) {
-      console.error("Error saving availability:", err)
-      alert("Error saving availability")
+      console.error("Error saving availability:", err);
+      alert("Error saving availability");
     }
-  }
+  };
 
   // Format time as AM/PM
   const formatTime = (timeString: string) => {
-    if (!timeString) return ""
-    const [hours, minutes] = timeString.split(":")
-    const h = parseInt(hours, 10)
-    const ampm = h >= 12 ? "PM" : "AM"
-    const formattedHour = h % 12 || 12
-    return `${formattedHour}:${minutes} ${ampm}`
-  }
+    if (!timeString) return "";
+    const [hours, minutes] = timeString.split(":");
+    const h = parseInt(hours, 10);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const formattedHour = h % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
 
   // ------------------ JSX ------------------
   return (
@@ -190,18 +198,49 @@ export default function SchedulePage() {
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-              <Dialog.Content className="fixed top-1/2 left-1/2 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-6 shadow-lg">
-                <Dialog.Title className="text-lg font-bold">Set Availability</Dialog.Title>
+              <Dialog.Content
+                className="
+    fixed top-1/2 left-1/2 w-[400px]
+    -translate-x-1/2 -translate-y-1/2
+    rounded-md
+    bg-white dark:bg-neutral-900
+    text-black dark:text-white
+    p-6 shadow-lg
+  "
+              >
+                <Dialog.Title className="text-lg font-bold">
+                  Set Availability
+                </Dialog.Title>
+
                 <div className="space-y-4 mt-4">
                   <div>
-                    <Label>Day</Label>
+                    <Label className="dark:text-white">Day</Label>
                     <select
-                      className="w-full border rounded p-2"
+                      className="
+          w-full border rounded p-2
+          bg-white dark:bg-neutral-800
+          text-black dark:text-white
+          border-gray-300 dark:border-neutral-700
+        "
                       value={formData.day}
-                      onChange={(e) => setFormData({ ...formData, day: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, day: e.target.value })
+                      }
                     >
-                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
-                        <option key={d} value={d}>
+                      {[
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday",
+                        "Sunday",
+                      ].map((d) => (
+                        <option
+                          key={d}
+                          value={d}
+                          className="bg-white dark:bg-neutral-800 text-black dark:text-white"
+                        >
                           {d}
                         </option>
                       ))}
@@ -210,29 +249,39 @@ export default function SchedulePage() {
 
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Label>Start Time</Label>
+                      <Label className="dark:text-white">Start Time</Label>
                       <Input
                         type="time"
+                        className="bg-white dark:bg-neutral-800 text-black dark:text-white"
                         value={formData.start}
-                        onChange={(e) => setFormData({ ...formData, start: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, start: e.target.value })
+                        }
                       />
                     </div>
+
                     <div className="flex-1">
-                      <Label>End Time</Label>
+                      <Label className="dark:text-white">End Time</Label>
                       <Input
                         type="time"
+                        className="bg-white dark:bg-neutral-800 text-black dark:text-white"
                         value={formData.end}
-                        onChange={(e) => setFormData({ ...formData, end: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, end: e.target.value })
+                        }
                       />
                     </div>
                   </div>
 
                   <div>
-                    <Label>Room</Label>
+                    <Label className="dark:text-white">Room</Label>
                     <Input
                       type="text"
+                      className="bg-white dark:bg-neutral-800 text-black dark:text-white"
                       value={formData.room}
-                      onChange={(e) => setFormData({ ...formData, room: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, room: e.target.value })
+                      }
                     />
                   </div>
 
@@ -240,16 +289,22 @@ export default function SchedulePage() {
                     <input
                       type="checkbox"
                       checked={formData.available}
-                      onChange={(e) => setFormData({ ...formData, available: e.target.checked })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          available: e.target.checked,
+                        })
+                      }
                     />
-                    <span>Available</span>
+                    <span className="dark:text-white">Available</span>
                   </div>
 
-                  <Button className="w-full" onClick={handleFormSubmit}>
-                    Save
-                  </Button>
+                  <Button className="w-full">Save</Button>
                 </div>
-                <Dialog.Close className="absolute top-2 right-2">✕</Dialog.Close>
+
+                <Dialog.Close className="absolute top-2 right-2 dark:text-white">
+                  ✕
+                </Dialog.Close>
               </Dialog.Content>
             </Dialog.Portal>
           </Dialog.Root>
@@ -259,7 +314,9 @@ export default function SchedulePage() {
         <Card>
           <CardHeader>
             <CardTitle>My Availability</CardTitle>
-            <CardDescription>Set days and times you are available</CardDescription>
+            <CardDescription>
+              Set days and times you are available
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {availability.length === 0 ? (
@@ -271,10 +328,12 @@ export default function SchedulePage() {
                   className="flex items-center justify-between p-2 border rounded mb-2 bg-gray-50"
                 >
                   <div>
-                    <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)} - {formatTime(a.end_time)}
+                    <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)}{" "}
+                    - {formatTime(a.end_time)}
                   </div>
                   <div>
-                    {a.is_available ? "✅ Available" : "❌ Unavailable"} | Room: {a.room_number}
+                    {a.is_available ? "✅ Available" : "❌ Unavailable"} | Room:{" "}
+                    {a.room_number}
                   </div>
                 </div>
               ))
@@ -294,7 +353,9 @@ export default function SchedulePage() {
                 <div className="mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
                   <h3 className="font-semibold">{date}</h3>
-                  <Badge variant="secondary">{appointments.length} appointments</Badge>
+                  <Badge variant="secondary">
+                    {appointments.length} appointments
+                  </Badge>
                 </div>
                 <div className="space-y-2 pl-6">
                   {appointments.map((apt) => (
@@ -306,11 +367,17 @@ export default function SchedulePage() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="font-medium">{apt.time}</p>
-                          <p className="text-sm text-muted-foreground">{apt.patientName}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {apt.patientName}
+                          </p>
                         </div>
                       </div>
                       <Badge
-                        variant={apt.type === "teleconsultation" ? "default" : "secondary"}
+                        variant={
+                          apt.type === "teleconsultation"
+                            ? "default"
+                            : "secondary"
+                        }
                       >
                         {apt.type}
                       </Badge>
@@ -323,5 +390,5 @@ export default function SchedulePage() {
         </Card>
       </div>
     </DashboardLayout>
-  )
+  );
 }
