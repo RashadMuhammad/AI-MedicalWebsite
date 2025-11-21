@@ -4,13 +4,29 @@ import { pool } from "../config/db";
 // ✅ Get all departments
 export const getDepartments = async (req: Request, res: Response) => {
   try {
-    const result = await pool.query("SELECT * FROM departments ORDER BY department_id ASC");
+    const result = await pool.query(`
+      SELECT 
+        d.department_id,
+        d.name,
+        u.name AS head,
+        d.head_id,
+        d.doctors_count,
+        d.patients_count,
+        d.revenue,
+        d.growth_percent,
+        d.status
+      FROM departments d
+      LEFT JOIN users u ON u.id = d.head_id
+      ORDER BY d.department_id ASC
+    `);
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching departments:", err);
     res.status(500).json({ error: "Failed to fetch departments" });
   }
 };
+
 
 // ✅ Get single department by ID
 export const getDepartmentById = async (req: Request, res: Response) => {

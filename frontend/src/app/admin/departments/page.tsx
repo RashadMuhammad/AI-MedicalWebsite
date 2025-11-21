@@ -39,6 +39,7 @@ import {
   DollarSign,
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { toast } from "sonner";
 import { Department, Staff } from "@/lib/types"
 
 function AdminNavigation() {
@@ -123,32 +124,41 @@ const handleAddDepartment = async (e: React.FormEvent) => {
       status: "active",
     };
 
-    console.log("Payload being sent:", payload);
-
     const { res, data } = await apiFetch("/api/departments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) throw new Error(data.error || "Failed to add department");
+    if (!res.ok) throw new Error(data?.error || "Something went wrong");
 
-    // ✅ Use already-parsed `data`
-    console.log("Response data:", data);
+    // ✅ Success toast
+    toast.success(`Department "${newDept.name}" added successfully!`);
 
-    // Depending on your backend structure (if returning { message, user }),
-    // update accordingly
-    const newDepartment = data.user || data;
+    const { data: updatedList } = await apiFetch("/api/departments");
+    setDepartments(updatedList); 
 
-    setDepartments((prev) => [...prev, newDepartment]);
-    setNewDept({ name: "", head_id: "", doctors_count: "", patients_count: "", revenue: "" });
 
-    // ✅ Close dialog after success
-    setTimeout(() => setOpen(false), 300);
-  } catch (error) {
+    // Clear form values
+    setNewDept({
+      name: "",
+      head_id: "",
+      doctors_count: "",
+      patients_count: "",
+      revenue: "",
+    });
+
+    // Close dialog
+    setOpen(false);
+
+  } catch (error: any) {
     console.error("Error adding department:", error);
+
+    // ❌ Error toast
+    toast.error(error?.message || "Failed to add department");
   }
 };
+
 
 
   // Fetch staff for a department
