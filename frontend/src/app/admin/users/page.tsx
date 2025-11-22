@@ -185,6 +185,8 @@ export default function UsersPage() {
         setSelectedRole("");
         setIsAddUserOpen(false);
         fetchUsersByRole();
+        await fetchUsersByRole();
+        await fetchCounts();
       } else {
         setStatus({ type: "error", message: data.error || "Server error" });
       }

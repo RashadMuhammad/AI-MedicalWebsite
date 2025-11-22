@@ -15,7 +15,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       phone,
       avatar,
       specialization,
-      department_id, // 👈 still read from req.body in camelCase
+      department_id, 
       dateOfBirth,
       blood_group,
       address,
@@ -56,13 +56,28 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         phone,
         avatar,
         specialization,
-        department_id, // 👈 still passed as parameter value
+        department_id, 
         dateOfBirth,
         blood_group,
         address,
         emergency_contact,
       ]
     );
+
+    if (role_name.toLowerCase() === "doctor" && department_id) {
+      await pool.query(
+        `UPDATE departments
+         SET doctors_count = (
+           SELECT COUNT(*)
+           FROM users u
+           JOIN user_roles r ON u.role_id = r.role_id
+           WHERE u.department_id = $1
+             AND r.role_name = 'doctor'
+         )
+         WHERE department_id = $1`,
+        [department_id]
+      );
+    }
 
     res.status(201).json({
       message: "✅ User created successfully",
