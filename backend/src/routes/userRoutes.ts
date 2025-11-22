@@ -5,11 +5,7 @@ const router = express.Router();
 
 // Routes
 router.post("/register", createUser);
-router.post("/login", (req, res) => {
-  console.log("Login route hit", req.body);
-  res.json({ success: true, body: req.body });
-});
-
+router.post("/login",loginUser)
 
 // Fetch user statistics
 router.get("/count-by-role", getCountByRole);
