@@ -48,9 +48,9 @@ export default function ProfilePage() {
     email: user?.email || "",
     phone: user?.phone || "",
     dateOfBirth: user?.dateOfBirth || "",
-    bloodGroup: user?.bloodGroup || "",
+    bloodGroup: user?.blood_group || "",
     address: user?.address || "",
-    emergencyContact: user?.emergencyContact || "",
+    emergencyContact: user?.emergency_contact || "",
   })
 
   const handleSave = (e: React.FormEvent) => {

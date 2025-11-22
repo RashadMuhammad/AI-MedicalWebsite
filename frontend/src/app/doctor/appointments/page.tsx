@@ -82,47 +82,57 @@ export default function DoctorAppointmentsPage() {
   }, [user?.id])
 
   // ✅ Handle status change
-  const handleStatusChange = async (
-    appointmentId: string,
-    newStatus: Appointment["status"]
-  ) => {
-    try {
-      const { res, data } = await apiFetch(`/api/appointments/${appointmentId}/status`, {
+ const handleStatusChange = async (
+  appointmentId: string,
+  newStatus: Appointment["status"]
+) => {
+  try {
+    console.log("Updating status:", appointmentId, newStatus);
+
+    const { res, data } = await apiFetch(
+      `/api/appointments/${appointmentId}/status`,
+      {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (res.ok) {
-        const updatedAppointment = data.data
-
-        toast({
-          title: "Status Updated",
-          description: `Appointment marked as ${updatedAppointment.status}.`,
-        })
-
-        setAppointments((prev) =>
-          prev.map((apt) =>
-            apt.appointment_id === appointmentId
-              ? { ...apt, status: updatedAppointment.status }
-              : apt
-          )
-        )
-      } else {
-        toast({
-          title: "Error",
-          description: data.error || "Failed to update status.",
-          variant: "destructive",
-        })
       }
-    } catch (error) {
-      console.error("Status change error:", error)
+    );
+
+    console.log("API response:", data);
+
+    if (res.ok) {
+      // Safely get updated status
+      const updatedStatus = data?.status || data?.data?.status || newStatus;
+
+      toast({
+        title: "Status Updated",
+        description: `Appointment marked as ${updatedStatus}.`,
+      });
+
+      // Update local state
+      setAppointments((prev) =>
+        prev.map((apt) =>
+          apt.appointment_id === appointmentId
+            ? { ...apt, status: updatedStatus }
+            : apt
+        )
+      );
+    } else {
       toast({
         title: "Error",
-        description: "Something went wrong while updating status.",
+        description: data?.error || "Failed to update status.",
         variant: "destructive",
-      })
+      });
     }
+  } catch (error) {
+    console.error("Status change error:", error);
+    toast({
+      title: "Error",
+      description: "Something went wrong while updating status.",
+      variant: "destructive",
+    });
   }
+};
 
   // ✅ Filter Appointments
   const filteredAppointments = appointments.filter((apt) => {

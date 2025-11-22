@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -71,9 +70,23 @@ export default function DoctorRecordsPage() {
     setFormData({ patientName: "", diagnosis: "", symptoms: "", prescription: "", notes: "" })
   }
 
-  const filteredRecords = mockMedicalRecords.filter((record) =>
-    record.diagnosis.toLowerCase().includes(searchQuery.toLowerCase()),
+ const filteredRecords = mockMedicalRecords.filter((record) => {
+  const query = searchQuery.toLowerCase()
+  
+  // Check patient name
+  const matchesPatient = record.patientName?.toString().toLowerCase().includes(query)
+  
+  // Check diagnosis
+  const matchesDiagnosis = record.diagnosis.toLowerCase().includes(query)
+  
+  // Check symptoms
+  const matchesSymptoms = record.symptoms.some((symptom) =>
+    symptom.toLowerCase().includes(query)
   )
+  
+  return matchesPatient || matchesDiagnosis || matchesSymptoms
+})
+
 
   return (
     <DashboardLayout navigation={<DoctorNavigation />}>
@@ -182,7 +195,11 @@ export default function DoctorRecordsPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle>{record.diagnosis}</CardTitle>
-                    <CardDescription className="mt-1">
+                    <CardDescription className="mt-1 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Patient:</span>
+                        {record.patientName}
+                      </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="h-3 w-3" />
                         {record.date}
@@ -247,8 +264,8 @@ export default function DoctorRecordsPage() {
                                 lab.status === "normal"
                                   ? "secondary"
                                   : lab.status === "abnormal"
-                                    ? "default"
-                                    : "destructive"
+                                  ? "default"
+                                  : "destructive"
                               }
                             >
                               {lab.status}
