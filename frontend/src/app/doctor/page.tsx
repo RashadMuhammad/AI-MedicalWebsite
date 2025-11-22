@@ -62,7 +62,7 @@ export default function DoctorDashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.name}</h1>
           <p className="text-muted-foreground">
-            {user?.specialization} • {user?.department}
+            {user?.specialization} • {user?.department_id}
           </p>
         </div>
 
@@ -133,19 +133,19 @@ export default function DoctorDashboard() {
               {todayAppointments.length > 0 ? (
                 <div className="space-y-4">
                   {todayAppointments.slice(0, 4).map((appointment) => (
-                    <div key={appointment.id} className="flex items-center gap-4 rounded-lg border p-3">
+                    <div key={appointment.appointment_id} className="flex items-center gap-4 rounded-lg border p-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                         <Clock className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1">
-                        <p className="font-medium">{appointment.patientName}</p>
+                        <p className="font-medium">{appointment.patientname}</p>
                         <p className="text-sm text-muted-foreground">{appointment.reason}</p>
                         <p className="text-xs text-muted-foreground">{appointment.time}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Badge variant={appointment.type === "teleconsultation" ? "default" : "secondary"}>
-                          {appointment.type === "teleconsultation" ? <Video className="mr-1 h-3 w-3" /> : null}
-                          {appointment.type}
+                        <Badge variant={appointment.appointment_type === "teleconsultation" ? "default" : "secondary"}>
+                          {appointment.appointment_type === "teleconsultation" ? <Video className="mr-1 h-3 w-3" /> : null}
+                          {appointment.appointment_type}
                         </Badge>
                       </div>
                     </div>

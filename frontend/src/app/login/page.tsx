@@ -48,6 +48,7 @@ export default function LoginPage() {
 
   // --- Login Function ---
   const login = async (email: string, password: string) => {
+    console.log("test",email,password)
     const { res, data } = await apiFetch("/api/users/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

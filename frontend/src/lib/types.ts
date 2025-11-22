@@ -54,6 +54,7 @@ export interface MedicalRecord {
   labResults?: LabResult[]
   notes: string
   followUpDate?: string
+  patientName?: string
 }
 
 // Prescription interface
