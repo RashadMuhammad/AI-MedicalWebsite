@@ -304,7 +304,9 @@ export default function SchedulePage() {
                     <span className="dark:text-white">Available</span>
                   </div>
 
-                  <Button className="w-full">Save</Button>
+                  <Button className="w-full" onClick={handleFormSubmit}>
+                    Save
+                  </Button>
                 </div>
 
                 <Dialog.Close className="absolute top-2 right-2 dark:text-white">
@@ -330,7 +332,10 @@ export default function SchedulePage() {
               availability.map((a, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between p-2 border rounded mb-2 bg-gray-50"
+                  className="
+  flex items-center justify-between p-2 border rounded mb-2 
+  bg-gray-50 dark:bg-gray-800 dark:border-gray-700
+"
                 >
                   <div>
                     <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)}{" "}
