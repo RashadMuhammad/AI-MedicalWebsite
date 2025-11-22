@@ -1,5 +1,11 @@
 import type { Appointment, MedicalRecord, Bill } from "./types"
 
+export const mockBills = [
+  { id: 1, patient: "John Doe", total: 120.0, status: "paid", date: "2025-11-20" },
+  { id: 2, patient: "Jane Smith", total: 250.0, status: "pending", date: "2025-11-21" },
+  { id: 3, patient: "Bob Johnson", total: 75.5, status: "paid", date: "2025-11-22" },
+  { id: 4, patient: "Alice Brown", total: 180.0, status: "pending", date: "2025-11-22" },
+]
 // Mock appointments data
 export const mockAppointments: Appointment[] = [
   {
