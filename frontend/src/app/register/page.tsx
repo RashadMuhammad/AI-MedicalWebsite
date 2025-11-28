@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 import type { User } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Loader2, Moon, Sun } from "lucide-react"
+import { Link, Loader2, Moon, Sun } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -230,6 +230,14 @@ export default function RegisterPage() {
                 "Register"
               )}
             </Button>
+            <div className="mt-6 text-center text-sm text-muted-foreground">
+            <p>
+               Already have an account?{" "}
+              <Link href="/login" className="text-blue-600 hover:underline">
+                Login
+              </Link>
+            </p>
+          </div>
           </form>
         </CardContent>
       </Card>
