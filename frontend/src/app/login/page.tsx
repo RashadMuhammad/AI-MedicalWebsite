@@ -24,6 +24,7 @@ export default function LoginPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const router = useRouter()
   const { toast } = useToast()
+  
 
   // --- Theme Persistence ---
   useEffect(() => {
@@ -58,16 +59,18 @@ export default function LoginPage() {
     console.log("Response:", data, "Status:", res.status)
 
     if (!res.ok) {
-      throw new Error(data?.error || "Login failed")
+      throw new Error(data?.error ?? "Invalid email or password")
     }
 
     // Save tokens and user info
-    localStorage.setItem("accessToken", data.accessToken)
-    localStorage.setItem("refreshToken", data.refreshToken || "")
-    localStorage.setItem("userRole", data.user.role)
-    localStorage.setItem("email", data.user.email)
-    localStorage.setItem("name", data.user.name)
-    localStorage.setItem("userId", data.user.id)
+    // localStorage.setItem("accessToken", data.accessToken)
+    // localStorage.setItem("refreshToken", data.refreshToken || "")
+    // localStorage.setItem("userRole", data.user.role)
+    // localStorage.setItem("email", data.user.email)
+    // localStorage.setItem("name", data.user.name)
+    // localStorage.setItem("userId", data.user.id)
+    console.log(data.sessionId,"gggggggggggggggggggggggggggggggggggggggggggggggggg")
+    localStorage.setItem("sessionId", data.sessionId)
 
     return data.user
   }

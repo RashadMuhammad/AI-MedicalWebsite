@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiFetch } from "@/lib/api";  // <- YOUR apiFetch function
 
-// Type for user
 interface User {
   name: string;
   email: string;
-  role: string;
+  role_name: string;
   phone?: string;
   avatarUrl?: string;
 }
@@ -26,13 +26,46 @@ const UserProfile: React.FC = () => {
   });
 
   useEffect(() => {
-    const name = localStorage.getItem("name") ?? "";
-    const email = localStorage.getItem("email") ?? "";
-    const role = localStorage.getItem("userRole") ?? "";
+    const loadUser = async () => {
+      try {
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          console.error("No session found");
+          return;
+        }
 
-    const userData: User = { name, email, role };
-    setUser(userData);
-    setFormData({ name, email, phone: "" });
+        const { res, data } = await apiFetch(`/api/session/${sessionId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          console.error("Session fetch failed");
+          return;
+        }
+
+        console.log("User session data:", data);
+
+        const userData: User = {
+          name: data.name,
+          email: data.email,
+          role_name: data.role_name,
+          phone: data.phone ?? "",
+        };
+
+        setUser(userData);
+        setFormData({
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone ?? "",
+        });
+
+      } catch (err) {
+        console.error("Error loading session:", err);
+      }
+    };
+
+    loadUser();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,16 +75,11 @@ const UserProfile: React.FC = () => {
   const handleSave = () => {
     if (!user) return;
 
-    const updatedUser = { ...user, ...formData };
-    setUser(updatedUser);
+    const updated = { ...user, ...formData };
+    setUser(updated);
     setIsEditing(false);
 
-    // Optionally update localStorage
-    localStorage.setItem("name", updatedUser.name);
-    localStorage.setItem("email", updatedUser.email);
-    localStorage.setItem("userRole", updatedUser.role);
-
-    console.log("Saved user data:", updatedUser);
+    console.log("Saved user data (local only):", updated);
   };
 
   if (!user) return <p>Loading...</p>;
@@ -61,6 +89,7 @@ const UserProfile: React.FC = () => {
       <CardHeader>
         <CardTitle>User Profile</CardTitle>
       </CardHeader>
+
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
           <Avatar>
@@ -70,9 +99,12 @@ const UserProfile: React.FC = () => {
               <AvatarFallback>{user.name[0]}</AvatarFallback>
             )}
           </Avatar>
+
           <div>
             <p className="font-semibold">{user.name}</p>
-            <p className="text-sm text-muted-foreground">{user.role}</p>
+            <p className="text-sm text-muted-foreground capitalize">
+              {user.role_name}
+            </p>
           </div>
         </div>
 
@@ -86,6 +118,7 @@ const UserProfile: React.FC = () => {
               disabled={!isEditing}
             />
           </div>
+
           <div>
             <Label>Email</Label>
             <Input
@@ -95,6 +128,7 @@ const UserProfile: React.FC = () => {
               disabled={!isEditing}
             />
           </div>
+
           <div>
             <Label>Phone</Label>
             <Input

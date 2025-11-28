@@ -5,7 +5,7 @@ import { getRoles, addRole } from "../controllers/userRoleController";
 const router = express.Router();
 
 // GET all roles
-router.get("/allroles", getRoles);
+router.get("/", getRoles);
 
 // POST a new role
 router.post("/", addRole);

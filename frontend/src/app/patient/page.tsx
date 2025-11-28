@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -35,20 +36,46 @@ function PatientNavigation() {
 
 export default function PatientDashboard() {
   const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
 
-  // Filter data for current patient
-  const patientAppointments = mockAppointments.filter((apt) => apt.patientId === user?.id)
-  const upcomingAppointments = patientAppointments.filter((apt) => apt.status === "scheduled")
-  const patientRecords = mockMedicalRecords.filter((record) => record.patientId === user?.id)
-  const patientBills = mockBills.filter((bill) => bill.patientId === user?.id)
-  const pendingBills = patientBills.filter((bill) => bill.status === "pending" || bill.status === "overdue")
+  // Local state for filtered data
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([])
+  const [patientRecords, setPatientRecords] = useState<any[]>([])
+  const [pendingBills, setPendingBills] = useState<any[]>([])
+
+  useEffect(() => {
+    if (user) {
+      // Filter data for current patient
+      const patientAppointments = mockAppointments.filter((apt) => apt.patientId === user.id)
+      setUpcomingAppointments(patientAppointments.filter((apt) => apt.status === "scheduled"))
+
+      setPatientRecords(mockMedicalRecords.filter((record) => record.patientId === user.id))
+
+      const patientBills = mockBills.filter((bill) => bill.patientId === user.id)
+      setPendingBills(patientBills.filter((bill) => bill.status === "pending" || bill.status === "overdue"))
+
+      setLoading(false)
+    }
+  }, [user])
+
+  if (loading) {
+    return (
+      <DashboardLayout navigation={<PatientNavigation />}>
+        <div className="flex h-64 w-full items-center justify-center text-muted-foreground">
+          Loading your dashboard...
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   return (
     <DashboardLayout navigation={<PatientNavigation />}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.name?.split(" ")[0]}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back, {user?.name?.split(" ")[0]}
+          </h1>
           <p className="text-muted-foreground">Here's your health overview</p>
         </div>
 
@@ -61,7 +88,9 @@ export default function PatientDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{upcomingAppointments.length}</div>
-              <p className="text-xs text-muted-foreground">Next: {upcomingAppointments[0]?.date || "None scheduled"}</p>
+              <p className="text-xs text-muted-foreground">
+                Next: {upcomingAppointments[0]?.date || "None scheduled"}
+              </p>
             </CardContent>
           </Card>
 
@@ -118,7 +147,10 @@ export default function PatientDashboard() {
             {upcomingAppointments.length > 0 ? (
               <div className="space-y-4">
                 {upcomingAppointments.slice(0, 3).map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between rounded-lg border p-4">
+                  <div
+                    key={appointment.id}
+                    className="flex items-center justify-between rounded-lg border p-4"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                         <Calendar className="h-6 w-6 text-primary" />
@@ -133,7 +165,9 @@ export default function PatientDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={appointment.type === "teleconsultation" ? "default" : "secondary"}>
+                      <Badge
+                        variant={appointment.type === "teleconsultation" ? "default" : "secondary"}
+                      >
                         {appointment.type}
                       </Badge>
                       <Badge
@@ -141,8 +175,8 @@ export default function PatientDashboard() {
                           appointment.status === "scheduled"
                             ? "default"
                             : appointment.status === "completed"
-                              ? "secondary"
-                              : "destructive"
+                            ? "secondary"
+                            : "destructive"
                         }
                       >
                         {appointment.status}
@@ -222,25 +256,37 @@ export default function PatientDashboard() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Link href="/patient/appointments">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <Calendar className="h-6 w-6" />
                   <span>Book Appointment</span>
                 </Button>
               </Link>
               <Link href="/patient/teleconsult">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <Video className="h-6 w-6" />
                   <span>Start Teleconsult</span>
                 </Button>
               </Link>
               <Link href="/patient/records">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <FileText className="h-6 w-6" />
                   <span>View Records</span>
                 </Button>
               </Link>
               <Link href="/patient/billing">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <CreditCard className="h-6 w-6" />
                   <span>Pay Bills</span>
                 </Button>

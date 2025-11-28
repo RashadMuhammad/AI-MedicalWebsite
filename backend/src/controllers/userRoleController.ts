@@ -4,6 +4,7 @@ import { pool } from "../config/db";
 // Get all roles
 export const getRoles = async (req: Request, res: Response) => {
   try {
+    console.log("etghetrhetrhfrherth")
     const result = await pool.query("SELECT role_name, role_description FROM user_roles ORDER BY role_name ASC");
     res.status(200).json(result.rows);
   } catch (error) {

@@ -2,8 +2,13 @@ import type { Request, Response } from "express";
 import { pool } from "../config/db";
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils";
+import crypto from "crypto";
+import { error } from "console";
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+export const createUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     console.log("req.body:", req.body);
 
@@ -15,7 +20,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
       phone,
       avatar,
       specialization,
-      department_id, 
+      department_id,
       dateOfBirth,
       blood_group,
       address,
@@ -23,17 +28,25 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     } = req.body;
 
     if (!email || !password || !name || !role_name) {
-      res.status(400).json({ error: "email, password, name, and role are required" });
+      res
+        .status(400)
+        .json({ error: "email, password, name, and role are required" });
       return;
     }
 
-    const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    const existingUser = await pool.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email]
+    );
     if (existingUser.rowCount && existingUser.rowCount > 0) {
       res.status(400).json({ error: "Email already exists" });
       return;
     }
 
-    const roleResult = await pool.query("SELECT role_id FROM user_roles WHERE role_name = $1", [role_name]);
+    const roleResult = await pool.query(
+      "SELECT role_id FROM user_roles WHERE role_name = $1",
+      [role_name]
+    );
     if (roleResult.rowCount === 0) {
       res.status(400).json({ error: "Invalid role" });
       return;
@@ -56,7 +69,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
         phone,
         avatar,
         specialization,
-        department_id, 
+        department_id,
         dateOfBirth,
         blood_group,
         address,
@@ -90,55 +103,75 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
 };
 
 export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  console.log("Reached here login")
+  console.log(password)
+
   try {
-    const { email, password } = req.body;
-    console.log(email, password);
-
-    // Check for user
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
-    const user = result.rows[0];
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Compare password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
-    }
-
-    // Generate tokens
-    const accessToken = generateAccessToken(user.id);
-    const refreshToken = generateRefreshToken(user.id);
-
-    // (Optional) Save refresh token in DB for session tracking
-    await pool.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [refreshToken, user.id]);
-    const roleResult = await pool.query(
-      "SELECT role_name FROM user_roles WHERE role_id = $1",
-      [user.role_id] // assuming your users table has role_id
+    // 1️⃣ Find user by email
+    const userResult = await pool.query(
+      `SELECT u.*, r.role_name 
+      FROM users u 
+      JOIN user_roles r ON u.role_id = r.role_id
+      WHERE email = $1`,
+      [email]
     );
 
-    const roleName = roleResult.rows[0]?.role_name || "unknown";
+    if (userResult.rowCount === 0) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
 
+    const user = userResult.rows[0];
 
+    console.log(user)
+
+    // 2️⃣ Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    console.log(user.id)
+    // 3️⃣ Generate tokens
+    const accessToken = generateAccessToken(user.id);
+
+    console.log(accessToken)
+
+    const refreshToken = generateRefreshToken(user.id);
+
+    // 4️⃣ Store session in database
+    const sessionResult = await pool.query(
+      `INSERT INTO sessions (user_id, access_token, refresh_token)
+       VALUES ($1, $2, $3)
+       RETURNING session_id`,
+      [user.id, accessToken, refreshToken]
+    );
+
+    console.log("sessionResult",sessionResult)
+
+    console.log("hi")
+
+    const sessionId = sessionResult.rows[0].session_id;
+
+    // 5️⃣ Respond
     res.status(200).json({
       message: "Login successful",
       user: {
         id: user.id,
-        email: user.email,
         name: user.name,
-        role: roleName,
+        email: user.email,
+        role: user.role_name,
       },
       accessToken,
       refreshToken,
+      sessionId,
     });
-  } catch (error) {
-    console.error("❌ Login error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+  } catch (err) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
-
 
 // GET /api/users/count-by-role
 export const getCountByRole = async (req: Request, res: Response) => {
@@ -177,7 +210,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getUsersByRole = async (req: Request, res: Response) => {
   try {
     const { role } = req.query;
@@ -202,7 +234,7 @@ export const getUsersByRole = async (req: Request, res: Response) => {
 
     // 3️⃣ Group users by role
     const usersByRole: Record<string, any[]> = {};
-    rows.forEach(user => {
+    rows.forEach((user) => {
       const roleName = user.role_name || "unknown";
       if (!usersByRole[roleName]) usersByRole[roleName] = [];
       usersByRole[roleName].push(user);
@@ -216,7 +248,9 @@ export const getUsersByRole = async (req: Request, res: Response) => {
 };
 export const getAllDoctor = async (req: Request, res: Response) => {
   try {
-    const result = await pool.query(`	SELECT u.id as head_id, u.name FROM users u JOIN user_roles r ON u.role_id = r.role_id WHERE r.role_name = 'doctor' ORDER BY u.name;`);
+    const result = await pool.query(
+      `	SELECT u.id as head_id, u.name FROM users u JOIN user_roles r ON u.role_id = r.role_id WHERE r.role_name = 'doctor' ORDER BY u.name;`
+    );
     res.status(200).json(result.rows);
   } catch (error) {
     console.error("Error fetching doctor details:", error);

@@ -3,7 +3,9 @@ import { pool } from "../config/db"
 
 // Create new availability
 export const createAvailability = async (req: Request, res: Response) => {
-  const data = req.body // <-- get data from request body
+  const data = req.body
+
+  console.log("Hey........",data)
 
   // Validate required fields
   if (!data.doctor_id || !data.day_of_week || !data.start_time || !data.end_time) {

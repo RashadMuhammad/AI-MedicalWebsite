@@ -1,202 +1,166 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useState, useEffect } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Activity, LogOut, User, Menu, X, Sun, Moon } from "lucide-react"
-import type { ReactNode } from "react"
+  DropdownMenuItem,
+  DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
 
-interface DashboardLayoutProps {
-  children: ReactNode
-  navigation: ReactNode
+import { Menu, X, Activity, User, LogOut, Sun, Moon } from "lucide-react";
+
+interface Props {
+  children: ReactNode;
+  navigation: ReactNode;
 }
 
-export function DashboardLayout({ children, navigation }: DashboardLayoutProps) {
-  const { user, logout } = useAuth()
-  const router = useRouter()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string; role: string } | null>(null)
-  const [theme, setTheme] = useState<"light" | "dark">("light")
+export function DashboardLayout({ children, navigation }: Props) {
+  const { user, logout } = useAuth();
+  const router = useRouter();
 
-  // --- Theme Setup ---
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
-    if (savedTheme) {
-      setTheme(savedTheme)
-      document.documentElement.classList.toggle("dark", savedTheme === "dark")
-    } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      const initialTheme = prefersDark ? "dark" : "light"
-      setTheme(initialTheme)
-      document.documentElement.classList.toggle("dark", prefersDark)
-    }
-  }, [])
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+
+    const detected =
+      saved ??
+      (window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light");
+
+    setTheme(detected);
+    document.documentElement.classList.toggle("dark", detected === "dark");
+  }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    localStorage.setItem("theme", newTheme)
-    document.documentElement.classList.toggle("dark", newTheme === "dark")
-  }
+    const next = theme === "light" ? "dark" : "light";
+    setTheme(next);
+    localStorage.setItem("theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+  };
 
-  // --- User Info Setup ---
-  useEffect(() => {
-    const name = localStorage.getItem("name") ?? ""
-    const email = localStorage.getItem("email") ?? ""
-    const role = localStorage.getItem("userRole") ?? ""
+  const userInfo = user
+    ? {
+        name: user.name || "User",
+        email: user.email || "",
+        role: user.role_name || "",
+      }
+    : null;
 
-    if (name && email && role) {
-      setUserInfo({ name, email, role })
-    } else if (user) {
-      const safeName = user.name ?? ""
-      const safeEmail = user.email ?? ""
-      const safeRole = user.role_name ?? ""
-      setUserInfo({ name: safeName, email: safeEmail, role: safeRole })
-      localStorage.setItem("name", safeName)
-      localStorage.setItem("email", safeEmail)
-      localStorage.setItem("userRole", safeRole)
-    }
-  }, [user])
+  console.log(userInfo, "egbjnjnnvbnvhrvhrjvbrjhbbrbnvrvujwrvbwbnvnvbnvbnwvnb");
 
-  const handleLogout = () => {
-    logout()
-    localStorage.removeItem("name")
-    localStorage.removeItem("email")
-    localStorage.removeItem("userRole")
-    router.push("/login")
-  }
+  const initials = userInfo?.name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
 
-  const getInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").toUpperCase()
-
-  const handleAvatarClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (userInfo) router.push("/profile")
-  }
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   return (
-    <div className="flex min-h-screen flex-col transition-colors duration-300">
+    <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-card">
-        <div className="flex h-16 items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2">
-            {/* Mobile Menu */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden mr-2 rounded-md p-2 hover:bg-accent"
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+      <header className="sticky top-0 z-50 h-16 border-b bg-card flex items-center justify-between px-4 md:px-6">
+        {/* LEFT */}
+        <div className="flex items-center gap-3">
+          <button
+            className="md:hidden rounded-md p-2 hover:bg-accent"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X /> : <Menu />}
+          </button>
 
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Activity className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold">MediMind AI</h1>
-              <p className="text-xs text-muted-foreground">
-                {userInfo?.role === "patient" && "Patient Portal"}
-                {userInfo?.role === "doctor" && "Doctor Dashboard"}
-              </p>
-            </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <Activity className="h-5 w-5 text-primary-foreground" />
           </div>
 
-          {/* Theme Toggle + Profile */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-              className="rounded-full"
-            >
-              {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+          <div>
+            <h1 className="text-lg font-semibold">MediMind AI</h1>
+            <p className="text-xs text-muted-foreground capitalize">
+              {userInfo?.role || ""}
+            </p>
+          </div>
+        </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div>
-                  <Avatar onClick={handleAvatarClick} className="cursor-pointer h-10 w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground flex items-center justify-center">
-                      {userInfo ? getInitials(userInfo.name) : "U"}
-                    </AvatarFallback>
-                  </Avatar>
+        {/* RIGHT */}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+            {theme === "dark" ? <Sun /> : <Moon />}
+          </Button>
+
+          {/* Profile Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="rounded-full h-10 w-10 flex items-center justify-center"
+              >
+                <Avatar className="h-10 w-10 cursor-pointer">
+                  <AvatarFallback>{initials || "U"}</AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium">{userInfo?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {userInfo?.email}
+                  </p>
                 </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{userInfo?.name}</p>
-                    <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
-                    <p className="text-xs font-medium capitalize text-primary">{userInfo?.role}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push("/profile")}>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              </DropdownMenuLabel>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push("/profile")}>
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
-      {/* Layout Body */}
+      {/* BODY */}
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className="hidden w-64 border-r bg-card md:block">
-          <nav className="space-y-1 p-4">{navigation}</nav>
+        <aside className="hidden md:block w-64 border-r bg-card p-4">
+          {navigation}
         </aside>
 
         {/* Mobile Sidebar */}
-        <>
-          {sidebarOpen && (
-            <div
-              className="fixed inset-0 z-40 bg-black/40 md:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
+        {sidebarOpen && (
           <div
-            className={`fixed top-0 left-0 z-50 h-full w-64 bg-card border-r shadow-lg transform transition-transform duration-300 md:hidden ${
-              sidebarOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                  <Activity className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <h2 className="text-base font-semibold">MediMind AI</h2>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="rounded-md p-1 hover:bg-accent"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <nav className="space-y-1 p-4">{navigation}</nav>
-          </div>
-        </>
+            className="fixed inset-0 bg-black/40 z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <div
+          className={`fixed top-0 left-0 z-50 h-full w-64 bg-card border-r shadow-lg p-4 transform transition-transform md:hidden ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          {navigation}
+        </div>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
-  )
+  );
 }

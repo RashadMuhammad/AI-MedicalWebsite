@@ -95,7 +95,7 @@ export default function UsersPage() {
   const [status, setStatus] = useState<Status>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [selectedDept, setSelectedDept] = useState<string>(""); // used for add form
+  const [selectedDept, setSelectedDept] = useState<string>(""); 
 
   // EDIT state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -129,7 +129,8 @@ export default function UsersPage() {
 
   const fetchRoles = async () => {
     try {
-      const { data } = await apiFetch("/api/roles/allroles");
+      const { data } = await apiFetch("/api/roles");
+      console.log("rashadddddd",data)
       setRoles(data);
     } catch (err) {
       console.error("Error fetching roles:", err);
@@ -223,7 +224,7 @@ export default function UsersPage() {
       ...user,
     };
 
-    console.log("Prefilled editData:", prefillData); // 👈 check what is being set
+    console.log("Prefilled editData:", prefillData);
     setEditData(prefillData);
     setIsEditOpen(true);
   };

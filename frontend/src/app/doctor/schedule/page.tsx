@@ -91,11 +91,11 @@ function DoctorNavigation() {
 // ------------------ MAIN COMPONENT ------------------
 export default function SchedulePage() {
   const { user } = useAuth();
-  const doctorId = localStorage.getItem("userId");
+  const sessionId = localStorage.getItem("sessionId");
 
   // Filter appointments for logged-in doctor
   const doctorAppointments = mockAppointments.filter(
-    (apt) => apt.doctorId === doctorId
+    (apt) => apt.doctorId === user?.id
   );
 
   // Group appointments by date
@@ -119,10 +119,10 @@ export default function SchedulePage() {
   useEffect(() => {
     const fetchAvailability = async () => {
       try {
-        const doctorId = localStorage.getItem("userId");
-        if (!doctorId) return;
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) return;
 
-        const response = await apiFetch(`/api/doctor/${doctorId}`);
+        const response = await apiFetch(`/api/doctor/${sessionId}`);
         if (response.data?.success) {
           setAvailability(response.data.data || []);
         }
@@ -137,14 +137,14 @@ export default function SchedulePage() {
   // Save new availability
   const handleFormSubmit = async () => {
     try {
-      const doctorId = localStorage.getItem("userId");
-      if (!doctorId) {
-        alert("Doctor ID not found — please login again.");
+      const sessionId = localStorage.getItem("sessionId");
+      if (!sessionId) {
+        alert("Session ID not found — please login again.");
         return;
       }
 
       const payload = {
-        doctor_id: doctorId,
+        doctor_id: user?.id,
         day_of_week: formData.day,
         start_time: formData.start,
         end_time: formData.end,
