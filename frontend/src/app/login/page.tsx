@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, Moon, Sun } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const router = useRouter()
   const { toast } = useToast()
+   const { login } = useAuth();
   
 
   // --- Theme Persistence ---
@@ -48,55 +50,28 @@ export default function LoginPage() {
   }
 
   // --- Login Function ---
-  const login = async (email: string, password: string) => {
-    console.log("test",email,password)
-    const { res, data } = await apiFetch("/api/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    })
-
-    console.log("Response:", data, "Status:", res.status)
-
-    if (!res.ok) {
-      throw new Error(data?.error ?? "Invalid email or password")
-    }
-
-    // Save tokens and user info
-    // localStorage.setItem("accessToken", data.accessToken)
-    // localStorage.setItem("refreshToken", data.refreshToken || "")
-    // localStorage.setItem("userRole", data.user.role)
-    // localStorage.setItem("email", data.user.email)
-    // localStorage.setItem("name", data.user.name)
-    // localStorage.setItem("userId", data.user.id)
-    console.log(data.sessionId,"gggggggggggggggggggggggggggggggggggggggggggggggggg")
-    localStorage.setItem("sessionId", data.sessionId)
-
-    return data.user
-  }
+  
 
   // --- Form Submit ---
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  e.preventDefault();
+  setIsLoading(true);
 
-    try {
-      const user = await login(email, password)
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${user.name}!`,
-      })
-      router.push(`/${user.role}`)
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+  try {
+    await login(email, password); // login from AuthProvider
+    toast({ title: "Login successful!" }); // show success toast
+  } catch (err: any) {
+    console.error("Login failed:", err);
+    toast({
+      title: "Login failed",
+      description: err?.message || "Invalid credentials",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false); // always stop loader
   }
+};
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 transition-colors duration-300">

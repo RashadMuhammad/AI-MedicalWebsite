@@ -1,18 +1,13 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { useRouter } from "next/navigation"; // ✅ missing import
 import type { User, UserRole } from "./types";
 import { apiFetch } from "./api";
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
   roles: UserRole[];
@@ -24,104 +19,85 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState<UserRole[]>([]);
+  const router = useRouter(); // ✅ added
 
-useEffect(() => {
-  const loadSession = async () => {
-    try {
-      const sessionId = localStorage.getItem("sessionId");
-
-      if (!sessionId) {
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("Session ID:", sessionId);
-
-      // 🔥 Correct API call
-      const { res, data } = await apiFetch(`/api/session/${sessionId}`, {
-        method: "GET",
-        credentials: "include",
-      });
-
-      console.log("Session Data From Backend:", data);
-
-      if (res.ok) {
-        setUser(data); 
-      } else {
-        setUser(null);
-      }
-
-    } catch (err) {
-      console.error("Session load failed:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  loadSession();
-}, []);
-
-
-
-  // ------------------------------
-  // Fetch available roles
-  // ------------------------------
+  // Load session
   useEffect(() => {
-      const fetchRoles = async () => {
-    try {
-      const { data } = await apiFetch("/api/roles");
-      console.log("rashadddddd",data)
-      setRoles(data);
-    } catch (err) {
-      console.error("Error fetching roles:", err);
-    }
-  };
+    const loadSession = async () => {
+      try {
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) {
+          setIsLoading(false);
+          return;
+        }
 
+        const { res, data } = await apiFetch(`/api/session/${sessionId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (res.ok) {
+          setUser(data.user || data); // adjust depending on backend
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("Session load failed:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSession();
+  }, []);
+
+  // Fetch roles
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const { data } = await apiFetch("/api/roles");
+        setRoles(data);
+      } catch (err) {
+        console.error("Error fetching roles:", err);
+      }
+    };
     fetchRoles();
   }, []);
 
-  // ------------------------------
   // Login
-  // ------------------------------
-  const login = async (email: string, password: string, role: UserRole) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
-
     try {
-      const res = await fetch("/api/login", {
+      const { res, data } = await apiFetch("/api/users/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password, role }),
-      });
+        body: JSON.stringify({ email, password }),
+      })
 
-      if (!res.ok) {
-        throw new Error("Invalid email, password, or role.");
+      if (!res.ok) throw new Error(data?.error || "Invalid credentials");
+
+      if (data.sessionId) {
+        localStorage.setItem("sessionId", data.sessionId);
       }
 
-      const loginData = await res.json();
-
-      // save session
-      if (loginData.sessionId) {
-        localStorage.setItem("sessionId", loginData.sessionId);
-      }
-
-      setUser(loginData.user);
+      setUser(data.user); // ✅ this must contain `email`, `name`, `role`
+      router.push(`/${data.user.role}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ------------------------------
-  // Logout
-  // ------------------------------
-  const logout = async () => {
-    await fetch("/api/logout", {
-      method: "POST",
-      credentials: "include",
-    });
 
-    localStorage.removeItem("sessionId");
-    setUser(null);
+  // Logout
+  const logout = async () => {
+    try {
+      await apiFetch("/api/logout", { method: "POST", credentials: "include" });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      localStorage.removeItem("sessionId");
+      setUser(null);
+    }
   };
 
   return (
