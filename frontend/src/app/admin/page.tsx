@@ -16,6 +16,7 @@ import {
   Building2,
   FileText,
   AlertCircle,
+  Workflow
 } from "lucide-react"
 import Link from "next/link"
 import { mockAppointments, mockBills } from "@/lib/mock-data"
@@ -28,6 +29,7 @@ function AdminNavigation() {
     { href: "/admin/appointments", icon: Calendar, label: "Appointments" },
     { href: "/admin/billing", icon: DollarSign, label: "Billing & Finance" },
     { href: "/admin/reports", icon: FileText, label: "Reports" },
+    { href: "/admin/services", icon:Workflow , label: "Services" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ]
 

@@ -4,7 +4,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Users, Calendar, Activity, Settings, Building2, FileText, DollarSign, Download } from "lucide-react"
+import { Users, Calendar, Activity, Settings, Building2, FileText, DollarSign, Download, Workflow } from "lucide-react"
 import { mockBills } from "@/lib/mock-data"
 import Link from "next/link"
 
@@ -16,6 +16,7 @@ function AdminNavigation() {
     { href: "/admin/appointments", icon: Calendar, label: "Appointments" },
     { href: "/admin/billing", icon: DollarSign, label: "Billing & Finance" },
     { href: "/admin/reports", icon: FileText, label: "Reports" },
+    { href: "/admin/services", icon: Workflow, label: "Services" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ]
 
