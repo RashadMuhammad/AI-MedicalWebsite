@@ -1,14 +1,21 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
-import type { User } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import {  Loader2, Moon, Sun } from "lucide-react"
-import { apiFetch } from "@/lib/api"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import Link from "next/link"
+import React, { useState, useEffect } from "react";
+import type { User } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Loader2, Moon, Sun } from "lucide-react";
+import { apiFetch } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Status = {
   type: "success" | "warning" | "error";
@@ -16,55 +23,62 @@ type Status = {
 } | null;
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState<Partial<User>>({ role_name: "patient" })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [status, setStatus] = useState<Status>(null)
-  const [theme, setTheme] = useState<"light" | "dark">("light")
+  const [formData, setFormData] = useState<Partial<User>>({
+    role_name: "patient",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<Status>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const router = useRouter();
 
-  // --- Theme Persistence ---
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
-      setTheme(savedTheme)
-      document.documentElement.classList.toggle("dark", savedTheme === "dark")
+      setTheme(savedTheme);
+      document.documentElement.classList.toggle("dark", savedTheme === "dark");
     } else {
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      const initialTheme = prefersDark ? "dark" : "light"
-      setTheme(initialTheme)
-      document.documentElement.classList.toggle("dark", prefersDark)
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      const initialTheme = prefersDark ? "dark" : "light";
+      setTheme(initialTheme);
+      document.documentElement.classList.toggle("dark", prefersDark);
     }
-  }, [])
+  }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    localStorage.setItem("theme", newTheme)
-    document.documentElement.classList.toggle("dark", newTheme === "dark")
-  }
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
 
   // --- Handle Input ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   // --- Submit Form ---
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setStatus(null)
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus(null);
 
     try {
       const { res, data } = await apiFetch("/api/users/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
-      })
+      });
 
-      console.log("Response:", data, "Status:", res.status)
+      console.log("Response:", data, "Status:", res.status);
 
       if (res.status === 201) {
-        setStatus({ type: "success", message: data.message || "User created!" })
+        setStatus({
+          type: "success",
+          message: data.message || "User created!",
+        });
         setFormData({
           role_name: "patient",
           name: "",
@@ -77,26 +91,37 @@ export default function RegisterPage() {
           emergency_contact: "",
           avatar: "",
           specialization: "",
-        })
+        });
       } else if (res.status === 400) {
-        setStatus({ type: "warning", message: data.error || "Invalid input" })
+        setStatus({ type: "warning", message: data.error || "Invalid input" });
       } else {
-        setStatus({ type: "error", message: data.error || "Server error" })
+        setStatus({ type: "error", message: data.error || "Server error" });
       }
     } catch (err: any) {
-      setStatus({ type: "error", message: err.message || "Something went wrong" })
+      setStatus({
+        type: "error",
+        message: err.message || "Something went wrong",
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  // --- Auto-hide Status ---
+  useEffect(() => {
+    const sessionId = localStorage.getItem("sessionId");
+
+    if (sessionId) {
+
+      router.push("/");
+    }
+  }, []);
+
   useEffect(() => {
     if (status) {
-      const timer = setTimeout(() => setStatus(null), 4000)
-      return () => clearTimeout(timer)
+      const timer = setTimeout(() => setStatus(null), 4000);
+      return () => clearTimeout(timer);
     }
-  }, [status])
+  }, [status]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 transition-colors duration-300">
@@ -234,7 +259,7 @@ export default function RegisterPage() {
           </form>
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>
-               Already have an account?{" "}
+              Already have an account?{" "}
               <Link href="/login" className="text-blue-600 hover:underline">
                 Login
               </Link>
@@ -243,5 +268,5 @@ export default function RegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

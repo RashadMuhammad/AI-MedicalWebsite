@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiFetch } from "@/lib/api";  // <- YOUR apiFetch function
+import { apiFetch } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Sun, Moon } from "lucide-react";
 
 interface User {
   name: string;
@@ -24,6 +26,20 @@ const UserProfile: React.FC = () => {
     email: "",
     phone: "",
   });
+  const router = useRouter();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+    const detected =
+      saved ??
+      (window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light");
+
+    setTheme(detected);
+    document.documentElement.classList.toggle("dark", detected === "dark");
+  }, []);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -59,7 +75,6 @@ const UserProfile: React.FC = () => {
           email: userData.email,
           phone: userData.phone ?? "",
         });
-
       } catch (err) {
         console.error("Error loading session:", err);
       }
@@ -89,6 +104,38 @@ const UserProfile: React.FC = () => {
       <CardHeader>
         <CardTitle>User Profile</CardTitle>
       </CardHeader>
+      <div className="flex items-center justify-between px-4 py-3 border-b mb-4">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/")} 
+          className="p-2 rounded-md hover:bg-accent"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+
+        <h2 className="text-lg font-semibold">Profile</h2>
+
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const newTheme = theme === "light" ? "dark" : "light";
+            setTheme(newTheme);
+            localStorage.setItem("theme", newTheme);
+            document.documentElement.classList.toggle(
+              "dark",
+              newTheme === "dark"
+            );
+          }}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
 
       <CardContent className="space-y-4">
         <div className="flex items-center space-x-4">
