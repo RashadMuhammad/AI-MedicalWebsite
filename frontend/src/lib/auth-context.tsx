@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation"; // ✅ missing import
 import type { User, UserRole } from "./types";
 import { apiFetch } from "./api";
@@ -19,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState<UserRole[]>([]);
-  const router = useRouter(); // ✅ added
+  const router = useRouter();
 
   // Load session
   useEffect(() => {
@@ -37,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (res.ok) {
-          setUser(data.user || data); // adjust depending on backend
+          setUser(data.user || data);
         } else {
           setUser(null);
         }
@@ -70,9 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { res, data } = await apiFetch("/api/users/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      })
+      });
 
       if (!res.ok) throw new Error(data?.error || "Invalid credentials");
 
@@ -80,13 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem("sessionId", data.sessionId);
       }
 
-      setUser(data.user); // ✅ this must contain `email`, `name`, `role`
-      router.push(`/${data.user.role}`);
+      const normalizedUser = {
+        ...data.user,
+        role_name: data.user.role || data.user.role_name,
+      };
+
+      setUser(normalizedUser);
+      router.push(`/${normalizedUser.role_name}`);
     } finally {
       setIsLoading(false);
     }
   };
-
 
   // Logout
   const logout = async () => {
@@ -102,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading, roles }}>
-      {children}
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 }

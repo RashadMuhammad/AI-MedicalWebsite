@@ -105,16 +105,14 @@ export const createUser = async (
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  console.log("Reached here login")
-  console.log(password)
+  console.log("Reached login");
 
   try {
-    // 1️⃣ Find user by email
     const userResult = await pool.query(
       `SELECT u.*, r.role_name 
-      FROM users u 
-      JOIN user_roles r ON u.role_id = r.role_id
-      WHERE email = $1`,
+       FROM users u 
+       JOIN user_roles r ON u.role_id = r.role_id
+       WHERE email = $1`,
       [email]
     );
 
@@ -124,38 +122,28 @@ export const loginUser = async (req: Request, res: Response) => {
 
     const user = userResult.rows[0];
 
-    console.log(user)
-
-    // 2️⃣ Compare password
+    // 2️⃣ Compare encrypted password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: "Invalid email or password" });
     }
 
-    console.log(user.id)
-    // 3️⃣ Generate tokens
+    await pool.query("DELETE FROM sessions WHERE user_id = $1", [user.id]);
+
     const accessToken = generateAccessToken(user.id);
-
-    console.log(accessToken)
-
     const refreshToken = generateRefreshToken(user.id);
 
-    // 4️⃣ Store session in database
-    const sessionResult = await pool.query(
+    // 5️⃣ Store NEW session in DB
+    const newSession = await pool.query(
       `INSERT INTO sessions (user_id, access_token, refresh_token)
        VALUES ($1, $2, $3)
        RETURNING session_id`,
       [user.id, accessToken, refreshToken]
     );
 
-    console.log("sessionResult",sessionResult)
+    const sessionId = newSession.rows[0].session_id;
 
-    console.log("hi")
-
-    const sessionId = sessionResult.rows[0].session_id;
-
-    // 5️⃣ Respond
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login successful",
       user: {
         id: user.id,
@@ -165,11 +153,11 @@ export const loginUser = async (req: Request, res: Response) => {
       },
       accessToken,
       refreshToken,
-      sessionId,
+      sessionId, 
     });
   } catch (err) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error("Login error:", err); 
+    return res.status(500).json({ error: "Server error" });
   }
 };
 

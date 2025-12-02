@@ -8,6 +8,7 @@ import departmentRoutes from "./routes/departmentRoutes"
 import doctorRoutes from "./routes/doctorRoutes"
 import appointmentsRoutes from "./routes/appointmentsRoutes"
 import sessionRoutes from "./routes/sessionRoutes"
+import { verifySession } from "./middleware/authMiddleware";
 
 
 dotenv.config();
@@ -27,9 +28,9 @@ app.get("/", async (_req, res) => {
 });
 app.use("/api/session",sessionRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/roles", userRoleRoutes);
-app.use("/api/departments", departmentRoutes);
-app.use("/api/doctor",doctorRoutes);
-app.use("/api/appointments",appointmentsRoutes);
+app.use("/api/roles",verifySession, userRoleRoutes);
+app.use("/api/departments",verifySession, departmentRoutes);
+app.use("/api/doctor",verifySession,doctorRoutes);
+app.use("/api/appointments",verifySession, appointmentsRoutes);
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

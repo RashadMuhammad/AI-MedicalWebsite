@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Loader2, Moon, Sun } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { useAuth } from "@/lib/auth-context"
+import GuestRoute from "@/components/auth/GuestRoute"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -49,17 +50,14 @@ export default function LoginPage() {
     document.documentElement.classList.toggle("dark", newTheme === "dark")
   }
 
-  // --- Login Function ---
-  
-
   // --- Form Submit ---
   const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsLoading(true);
 
   try {
-    await login(email, password); // login from AuthProvider
-    toast({ title: "Login successful!" }); // show success toast
+    await login(email, password);
+    toast({ title: "Login successful!" }); 
   } catch (err: any) {
     console.error("Login failed:", err);
     toast({
@@ -74,6 +72,7 @@ export default function LoginPage() {
 
 
   return (
+    <GuestRoute>
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 transition-colors duration-300">
       {/* Top-right Theme Toggle */}
       <div className="absolute top-4 right-4">
@@ -151,5 +150,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+    </GuestRoute>
   )
 }

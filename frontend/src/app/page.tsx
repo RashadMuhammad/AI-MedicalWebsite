@@ -14,10 +14,8 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        // Redirect user to their role-based dashboard
         router.replace(`/${user.role_name}`)
       } else {
-        // No user logged in, redirect to login
         router.replace("/login")
       }
     }
