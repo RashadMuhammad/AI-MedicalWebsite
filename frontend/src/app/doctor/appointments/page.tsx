@@ -1,22 +1,23 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Calendar, Clock, FileText, Filter } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import Link from "next/link"
-import { apiFetch } from "@/lib/api"
-import { Appointment } from "@/lib/types"
+} from "@/components/ui/select";
+import { Calendar, Clock, FileText, Filter } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { apiFetch } from "@/lib/api";
+import { Appointment } from "@/lib/types";
+import { useAuth } from "@/lib/auth-context";
 
 function DoctorNavigation() {
   const navItems = [
@@ -24,7 +25,7 @@ function DoctorNavigation() {
     { href: "/doctor/appointments", icon: Calendar, label: "Appointments" },
     { href: "/doctor/patients", icon: Calendar, label: "Patients" },
     { href: "/doctor/records", icon: FileText, label: "Medical Records" },
-  ]
+  ];
 
   return (
     <>
@@ -37,66 +38,73 @@ function DoctorNavigation() {
         </Link>
       ))}
     </>
-  )
+  );
 }
 
 // ✅ Status transition rules
 const getNextStatuses = (currentStatus: string) => {
-  const status = currentStatus.toLowerCase()
+  const status = currentStatus.toLowerCase();
   switch (status) {
     case "scheduled":
-      return ["in-progress", "cancelled"]
+      return ["in-progress", "cancelled"];
     case "in-progress":
-      return ["completed", "cancelled"]
+      return ["completed", "cancelled"];
     default:
-      return []
+      return [];
   }
-}
+};
 
 export default function DoctorAppointmentsPage() {
-  const { toast } = useToast()
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [filterDate, setFilterDate] = useState<string>("all")
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterDate, setFilterDate] = useState<string>("all");
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch appointments after sessionId is available
   useEffect(() => {
-    const fetchAppointments = async () => {
-      const sessionId = localStorage.getItem("sessionId")
-      if (!sessionId) return
+    if (!user?.id) return; // wait for user to load
 
+    const fetchAppointments = async () => {
       try {
-        const { data } = await apiFetch(`/api/appointments/doctor`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionId}`,
-          },
-        })
-        if (data.success) setAppointments(data.data)
+        const sessionId = localStorage.getItem("sessionId");
+        if (!sessionId) return;
+
+        const { data } = await apiFetch(
+          `/api/appointments/doctor/${user.id}`, 
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${sessionId}`,
+            },
+          }
+        );
+
+        if (data.success) {
+          setAppointments(data.data);
+        }
       } catch (error) {
-        console.error("Error fetching appointments:", error)
+        console.error(error);
         toast({
           title: "Error",
           description: "Failed to fetch appointments",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchAppointments()
-  }, [toast])
+    fetchAppointments();
+  }, [user?.id]);
 
-  // ✅ Handle status change
   const handleStatusChange = async (
     appointmentId: string,
     newStatus: Appointment["status"]
   ) => {
-    const sessionId = localStorage.getItem("sessionId")
-    if (!sessionId) return
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) return;
 
     try {
       const { res, data } = await apiFetch(
@@ -105,18 +113,18 @@ export default function DoctorAppointmentsPage() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionId}`,
+            Authorization: `Bearer ${sessionId}`,
           },
           body: JSON.stringify({ status: newStatus }),
         }
-      )
+      );
 
       if (res.ok) {
-        const updatedStatus = data?.status || data?.data?.status || newStatus
+        const updatedStatus = data?.status || data?.data?.status || newStatus;
         toast({
           title: "Status Updated",
           description: `Appointment marked as ${updatedStatus}.`,
-        })
+        });
 
         setAppointments((prev) =>
           prev.map((apt) =>
@@ -124,36 +132,38 @@ export default function DoctorAppointmentsPage() {
               ? { ...apt, status: updatedStatus }
               : apt
           )
-        )
+        );
       } else {
         toast({
           title: "Error",
           description: data?.error || "Failed to update status.",
           variant: "destructive",
-        })
+        });
       }
     } catch (error) {
-      console.error("Status change error:", error)
+      console.error("Status change error:", error);
       toast({
         title: "Error",
         description: "Something went wrong while updating status.",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   // ✅ Filter appointments
   const filteredAppointments = appointments.filter((apt) => {
-    const status = apt.status.toLowerCase()
-    if (filterStatus !== "all" && status !== filterStatus) return false
+    const status = apt.status.toLowerCase();
+    if (filterStatus !== "all" && status !== filterStatus) return false;
 
     if (filterDate !== "all") {
-      const today = new Date().toISOString().split("T")[0]
-      if (filterDate === "today" && apt.appointment_date !== today) return false
-      if (filterDate === "upcoming" && apt.appointment_date <= today) return false
+      const today = new Date().toISOString().split("T")[0];
+      if (filterDate === "today" && apt.appointment_date !== today)
+        return false;
+      if (filterDate === "upcoming" && apt.appointment_date <= today)
+        return false;
     }
-    return true
-  })
+    return true;
+  });
 
   if (loading) {
     return (
@@ -162,15 +172,20 @@ export default function DoctorAppointmentsPage() {
           Loading appointments...
         </div>
       </DashboardLayout>
-    )
+    );
   }
 
   return (
-    <DashboardLayout navigation={<DoctorNavigation />} allowedRoles={["doctor"]}>
+    <DashboardLayout
+      navigation={<DoctorNavigation />}
+      allowedRoles={["doctor"]}
+    >
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Appointments</h1>
-          <p className="text-muted-foreground">Manage your patient appointments</p>
+          <p className="text-muted-foreground">
+            Manage your patient appointments
+          </p>
         </div>
 
         {/* Filters */}
@@ -208,7 +223,7 @@ export default function DoctorAppointmentsPage() {
         <div className="space-y-4">
           {filteredAppointments.length > 0 ? (
             filteredAppointments.map((appointment) => {
-              const nextStatuses = getNextStatuses(appointment.status)
+              const nextStatuses = getNextStatuses(appointment.status);
               return (
                 <Card key={appointment.appointment_id}>
                   <CardContent className="pt-6">
@@ -219,10 +234,16 @@ export default function DoctorAppointmentsPage() {
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">{appointment.patientname}</h3>
-                            <Badge variant="outline">{appointment.appointment_type}</Badge>
+                            <h3 className="font-semibold">
+                              {appointment.patientname}
+                            </h3>
+                            <Badge variant="outline">
+                              {appointment.appointment_type}
+                            </Badge>
                           </div>
-                          <p className="mt-1 text-sm text-muted-foreground">{appointment.reason}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {appointment.reason}
+                          </p>
                           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
@@ -244,7 +265,8 @@ export default function DoctorAppointmentsPage() {
                               ? "default"
                               : appointment.status.toLowerCase() === "completed"
                               ? "secondary"
-                              : appointment.status.toLowerCase() === "in-progress"
+                              : appointment.status.toLowerCase() ===
+                                "in-progress"
                               ? "outline"
                               : "destructive"
                           }
@@ -269,7 +291,8 @@ export default function DoctorAppointmentsPage() {
                                 <SelectItem key={status} value={status}>
                                   {status === "in-progress"
                                     ? "In Progress"
-                                    : status.charAt(0).toUpperCase() + status.slice(1)}
+                                    : status.charAt(0).toUpperCase() +
+                                      status.slice(1)}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -288,7 +311,7 @@ export default function DoctorAppointmentsPage() {
                     </div>
                   </CardContent>
                 </Card>
-              )
+              );
             })
           ) : (
             <Card>
@@ -301,5 +324,5 @@ export default function DoctorAppointmentsPage() {
         </div>
       </div>
     </DashboardLayout>
-  )
+  );
 }

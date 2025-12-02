@@ -170,7 +170,9 @@ export const deleteAppointment = async (req: Request, res: Response) => {
 export const getDoctorAppointments = async (req: Request, res: Response) => {
   try {
     let { doctorId } = req.params;
-    doctorId = doctorId.trim(); // remove any whitespace/newlines
+    doctorId = doctorId.trim();
+
+    console.log("doctorId",doctorId)
 
     const result = await pool.query(
       `SELECT 

@@ -146,7 +146,6 @@ export default function UsersPage() {
     }
   };
 
-  // Auto-refresh all
   useEffect(() => {
     const fetchAll = async () => {
       await fetchCounts();
@@ -155,18 +154,16 @@ export default function UsersPage() {
       await fetchDepartments();
     };
 
-    // Initial fetch
     fetchAll();
 
-    // Set interval (e.g., every 30 seconds)
     const intervalId = setInterval(() => {
       fetchAll();
-    }, 30000); // adjust as needed
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, [activeTab]);
 
-  // Handle Add User
+
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
