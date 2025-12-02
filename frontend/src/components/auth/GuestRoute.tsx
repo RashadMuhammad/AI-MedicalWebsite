@@ -1,5 +1,6 @@
 // components/GuestRoute.tsx
 "use client";
+
 import { ReactNode, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -13,11 +14,8 @@ export default function GuestRoute({ children }: Props) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-                console.log("HI....................swfcsrtrthertjwrth243624562456245624562456243562345624562456")
-        router.replace(`/${user.role_name}`);
-      }
+    if (!isLoading && user) {
+      router.replace(`/${user.role_name}`);
     }
   }, [user, isLoading, router]);
 

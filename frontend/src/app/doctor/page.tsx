@@ -56,7 +56,7 @@ export default function DoctorDashboard() {
   const uniquePatients = new Set(doctorAppointments.map((apt) => apt.patientId))
 
   return (
-    <DashboardLayout navigation={<DoctorNavigation />}>
+    <DashboardLayout navigation={<DoctorNavigation />} allowedRoles={["doctor"]}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

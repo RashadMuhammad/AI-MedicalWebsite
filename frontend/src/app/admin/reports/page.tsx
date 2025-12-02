@@ -33,7 +33,7 @@ function AdminNavigation() {
 
 export default function ReportsPage() {
   return (
-    <DashboardLayout navigation={<AdminNavigation />}>
+    <DashboardLayout navigation={<AdminNavigation />} allowedRoles={["admin"]}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reports</h1>

@@ -89,7 +89,7 @@ export default function DoctorRecordsPage() {
 
 
   return (
-    <DashboardLayout navigation={<DoctorNavigation />}>
+    <DashboardLayout navigation={<DoctorNavigation />} allowedRoles={["doctor"]}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

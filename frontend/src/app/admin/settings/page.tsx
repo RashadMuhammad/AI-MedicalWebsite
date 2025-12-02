@@ -36,7 +36,7 @@ function AdminNavigation() {
 
 export default function SettingsPage() {
   return (
-    <DashboardLayout navigation={<AdminNavigation />}>
+    <DashboardLayout navigation={<AdminNavigation />} allowedRoles={["admin"]}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Settings</h1>

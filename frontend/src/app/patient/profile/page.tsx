@@ -63,7 +63,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <DashboardLayout navigation={<PatientNavigation />}>
+    <DashboardLayout navigation={<PatientNavigation />} allowedRoles={["patient"]}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

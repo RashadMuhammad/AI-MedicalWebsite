@@ -55,7 +55,7 @@ export default function AdminDashboard() {
   const scheduledAppointments = mockAppointments.filter((a) => a.status === "scheduled").length
 
   return (
-    <DashboardLayout navigation={<AdminNavigation />}>
+    <DashboardLayout navigation={<AdminNavigation />} allowedRoles={["admin"]}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

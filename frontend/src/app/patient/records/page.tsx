@@ -39,7 +39,7 @@ export default function MedicalRecordsPage() {
   const patientRecords = mockMedicalRecords.filter((record) => record.patientId === user?.id)
 
   return (
-    <DashboardLayout navigation={<PatientNavigation />}>
+    <DashboardLayout navigation={<PatientNavigation />} allowedRoles={["patient"]}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>

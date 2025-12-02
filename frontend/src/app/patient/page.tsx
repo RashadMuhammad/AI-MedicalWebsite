@@ -69,7 +69,7 @@ export default function PatientDashboard() {
   }
 
   return (
-    <DashboardLayout navigation={<PatientNavigation />}>
+    <DashboardLayout navigation={<PatientNavigation />} allowedRoles={["patient"]}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>

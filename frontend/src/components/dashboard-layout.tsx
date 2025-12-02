@@ -24,7 +24,13 @@ interface Props {
   navigation: ReactNode;
 }
 
-export function DashboardLayout({ children, navigation }: Props) {
+interface Props {
+  children: ReactNode;
+  navigation: ReactNode;
+  allowedRoles?: string[];
+}
+
+export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -71,7 +77,7 @@ export function DashboardLayout({ children, navigation }: Props) {
   };
 
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={allowedRoles}>
       <div className="flex min-h-screen flex-col">
         {/* Header */}
         <header className="sticky top-0 z-50 h-16 border-b bg-card flex items-center justify-between px-4 md:px-6">
