@@ -138,3 +138,58 @@ export const getAllDoctorAvailability = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: "Internal Server Error" })
   }
 }
+
+export const updateAvailability = async (req: Request, res: Response) => {
+  const id = req.params.id;
+  const data = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE doctor_availability
+       SET day_of_week=$1,
+           start_time=$2,
+           end_time=$3,
+           room_number=$4,
+           is_available=$5
+       WHERE id=$6
+       RETURNING *`,
+      [
+        data.day_of_week,
+        data.start_time,
+        data.end_time,
+        data.room_number,
+        data.is_available,
+        id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error("Error updating:", err);
+    res.status(500).json({ success: false, error: "Database error" });
+  }
+};
+
+export const deleteAvailability = async (req: Request, res: Response) => {
+  const id = req.params.id;
+console.log("deleting id......................",id)
+  try {
+    const result = await pool.query(
+      `DELETE FROM doctor_availability WHERE id=$1 RETURNING *`,
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Not found" });
+    }
+
+    res.json({ success: true, message: "Deleted" });
+  } catch (err) {
+    console.error("Error deleting:", err);
+    res.status(500).json({ success: false, error: "Database error" });
+  }
+};

@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
+import { toast } from "sonner";
 
 // ------------------ MOCK DATA ------------------
 const mockAppointments = [
@@ -105,7 +106,6 @@ export default function SchedulePage() {
     return acc;
   }, {} as Record<string, typeof doctorAppointments>);
 
-  // ------------------ AVAILABILITY ------------------
   const [availability, setAvailability] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     day: "Monday",
@@ -114,15 +114,15 @@ export default function SchedulePage() {
     room: "",
     available: true,
   });
+  const [editId, setEditId] = useState<number | null>(null);
 
   // Fetch availability from backend
   useEffect(() => {
+    if (!user?.id) return;
+
     const fetchAvailability = async () => {
       try {
-        const sessionId = localStorage.getItem("sessionId");
-        if (!sessionId) return;
-
-        const response = await apiFetch(`/api/doctor/${sessionId}`);
+        const response = await apiFetch(`/api/doctor/${user.id}`);
         if (response.data?.success) {
           setAvailability(response.data.data || []);
         }
@@ -132,7 +132,7 @@ export default function SchedulePage() {
     };
 
     fetchAvailability();
-  }, []);
+  }, [user?.id]);
 
   // Save new availability
   const handleFormSubmit = async () => {
@@ -181,6 +181,53 @@ export default function SchedulePage() {
     return `${formattedHour}:${minutes} ${ampm}`;
   };
 
+  const handleUpdate = async () => {
+    if (!editId) return;
+
+    try {
+      const response = await apiFetch(`/api/doctor/${editId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          day_of_week: formData.day,
+          start_time: formData.start,
+          end_time: formData.end,
+          room_number: formData.room,
+          is_available: formData.available,
+        }),
+      });
+
+      if (response.data?.success) {
+        setAvailability((prev) =>
+          prev.map((item) => (item.id === editId ? response.data.data : item))
+        );
+
+        toast.success("Availability updated");
+
+        setEditId(null);
+        (
+          document.querySelector("[data-edit-dialog-btn]") as HTMLElement
+        )?.click();
+      }
+    } catch (error) {
+      console.error("Update error:", error);
+    }
+  };
+
+  const handleDelete = async (id: Number) => {
+    try {
+      const response = await apiFetch(`/api/doctor/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.data?.success) {
+        setAvailability((prev) => prev.filter((x) => x.id !== id));
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
   // ------------------ JSX ------------------
   return (
     <DashboardLayout navigation={<DoctorNavigation />}>
@@ -193,14 +240,19 @@ export default function SchedulePage() {
           </div>
 
           <Dialog.Root>
+            {/* Hidden trigger for Edit */}
+            <Dialog.Trigger
+              data-edit-dialog-btn
+              className="hidden"
+            ></Dialog.Trigger>
             <Dialog.Trigger asChild>
               <Button variant="outline">Set Availability</Button>
             </Dialog.Trigger>
             <Dialog.Portal>
               <Dialog.Overlay
                 className="    fixed inset-0
-    bg-gradient-to-b from-black/10 to-black/30
-    z-[9998]"
+                bg-gradient-to-b from-black/10 to-black/30
+                z-[9998]"
               />
               <Dialog.Content
                 className="
@@ -304,9 +356,15 @@ export default function SchedulePage() {
                     <span className="dark:text-white">Available</span>
                   </div>
 
-                  <Button className="w-full" onClick={handleFormSubmit}>
-                    Save
-                  </Button>
+                  {editId ? (
+                    <Button className="w-full" onClick={handleUpdate}>
+                      Update
+                    </Button>
+                  ) : (
+                    <Button className="w-full" onClick={handleFormSubmit}>
+                      Save
+                    </Button>
+                  )}
                 </div>
 
                 <Dialog.Close className="absolute top-2 right-2 dark:text-white">
@@ -325,25 +383,61 @@ export default function SchedulePage() {
               Set days and times you are available
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             {availability.length === 0 ? (
               <p>No availability set yet.</p>
             ) : (
-              availability.map((a, idx) => (
+              availability.map((a) => (
                 <div
-                  key={idx}
-                  className="
-  flex items-center justify-between p-2 border rounded mb-2 
-  bg-gray-50 dark:bg-gray-800 dark:border-gray-700
-"
+                  key={a.id}
+                  className="flex items-center justify-between p-2 border rounded mb-2 
+          bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
                 >
+                  {/* LEFT SIDE INFO */}
                   <div>
                     <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)}{" "}
                     - {formatTime(a.end_time)}
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Room: {a.room_number}
+                    </div>
                   </div>
-                  <div>
-                    {a.is_available ? "✅ Available" : "❌ Unavailable"} | Room:{" "}
-                    {a.room_number}
+
+                  {/* RIGHT SIDE BUTTONS */}
+                  <div className="flex items-center gap-2">
+                    {/* EDIT BUTTON */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEditId(a.id);
+                        setFormData({
+                          day: a.day_of_week,
+                          start: a.start_time,
+                          end: a.end_time,
+                          room: a.room_number,
+                          available: a.is_available,
+                        });
+                        setTimeout(() => {
+                          (
+                            document.querySelector(
+                              "[data-edit-dialog-btn]"
+                            ) as HTMLButtonElement
+                          )?.click();
+                        }, 50);
+                      }}
+                    >
+                      ✏️
+                    </Button>
+
+                    {/* DELETE BUTTON */}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(a.id)}
+                    >
+                      🗑️
+                    </Button>
                   </div>
                 </div>
               ))
