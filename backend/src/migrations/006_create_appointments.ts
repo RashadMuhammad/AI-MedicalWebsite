@@ -17,6 +17,7 @@ export async function createAppointmentsTable() {
         reason TEXT,                             
 
         status VARCHAR(20) DEFAULT 'Scheduled',  
+        is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );

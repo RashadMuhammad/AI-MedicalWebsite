@@ -37,6 +37,7 @@ import {
   Settings,
   FileText,
   DollarSign,
+  Workflow
 } from "lucide-react"
 import { apiFetch } from "@/lib/api"
 import { toast } from "sonner";
@@ -50,6 +51,7 @@ function AdminNavigation() {
     { href: "/admin/appointments", icon: Calendar, label: "Appointments" },
     { href: "/admin/billing", icon: DollarSign, label: "Billing & Finance" },
     { href: "/admin/reports", icon: FileText, label: "Reports" },
+    { href: "/admin/services", icon:Workflow , label: "Services" },
     { href: "/admin/settings", icon: Settings, label: "Settings" },
   ]
 

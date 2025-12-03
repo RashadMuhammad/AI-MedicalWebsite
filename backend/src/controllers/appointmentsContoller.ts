@@ -17,8 +17,8 @@ export const createAppointment = async (req: Request, res: Response) => {
 
     const result = await pool.query(
       `INSERT INTO appointments 
-        (patient_id, doctor_id, appointment_date, start_time, end_time, appointment_type, reason, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'Scheduled'))
+        (patient_id, doctor_id, appointment_date, start_time, end_time, appointment_type, reason, status, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'Scheduled'), false)
        RETURNING *`,
       [
         patient_id,
@@ -42,7 +42,8 @@ export const createAppointment = async (req: Request, res: Response) => {
   }
 };
 
-// 📋 Get all appointments (optionally filtered by doctor or patient)
+
+
 export const getAppointments = async (req: Request, res: Response) => {
   try {
     const { doctor_id, patient_id } = req.query;

@@ -1,15 +1,22 @@
-import { Request, Response } from "express"
-import { pool } from "../config/db"
+import { Request, Response } from "express";
+import { pool } from "../config/db";
 
 // Create new availability
 export const createAvailability = async (req: Request, res: Response) => {
-  const data = req.body
+  const data = req.body;
 
-  console.log("Hey........",data)
+  console.log("Hey........", data);
 
   // Validate required fields
-  if (!data.doctor_id || !data.day_of_week || !data.start_time || !data.end_time) {
-    return res.status(400).json({ success: false, error: "Missing required fields" })
+  if (
+    !data.doctor_id ||
+    !data.day_of_week ||
+    !data.start_time ||
+    !data.end_time
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Missing required fields" });
   }
 
   try {
@@ -24,23 +31,25 @@ export const createAvailability = async (req: Request, res: Response) => {
         data.start_time,
         data.end_time,
         data.room_number || null,
-        data.is_available ?? true 
+        data.is_available ?? true,
       ]
-    )
+    );
 
-    res.status(201).json({ success: true, data: result.rows[0] })
+    res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
-    console.error(err)
-    res.status(500).json({ success: false, error: "Database error" })
+    console.error(err);
+    res.status(500).json({ success: false, error: "Database error" });
   }
-}
+};
 
 // Get all availability for a doctor
 export const getDoctorAvailability = async (req: Request, res: Response) => {
-  let doctor_id = req.params.doctor_id?.trim(); 
+  let doctor_id = req.params.doctor_id?.trim();
 
   if (!doctor_id) {
-    return res.status(400).json({ success: false, error: "Doctor ID is required" });
+    return res
+      .status(400)
+      .json({ success: false, error: "Doctor ID is required" });
   }
 
   try {
@@ -75,7 +84,10 @@ export const getDoctorAvailability = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: "Database error" });
   }
 };
-export const getDoctorsWithDepartments = async (req: Request, res: Response) => {
+export const getDoctorsWithDepartments = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -88,21 +100,21 @@ export const getDoctorsWithDepartments = async (req: Request, res: Response) => 
         SELECT role_id FROM user_roles WHERE role_name = 'doctor'
       )
       ORDER BY u.name;
-    `)
+    `);
 
-    console.log("✅ Doctors fetched:", result.rows)
+    console.log("✅ Doctors fetched:", result.rows);
 
     return res.status(200).json({
       success: true,
       data: result.rows,
-    })
+    });
   } catch (error: any) {
-    console.error("❌ Error fetching doctors:", error)
+    console.error("❌ Error fetching doctors:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch doctors",
       error: error.message,
-    })
+    });
   }
 };
 export const getAllDoctorAvailability = async (req: Request, res: Response) => {
@@ -128,16 +140,18 @@ export const getAllDoctorAvailability = async (req: Request, res: Response) => {
           WHEN day_of_week = 'Sunday' THEN 7
         END,
         start_time;
-    `
+    `;
 
-    const result = await pool.query(query)
-        console.log("✅ Doctorsfrfrfrfrfrfrfrfr fetched:", result.rows)
-    return res.status(200).json({ success: true, data: result.rows })
+    const result = await pool.query(query);
+    console.log("✅ Doctorsfrfrfrfrfrfrfrfr fetched:", result.rows);
+    return res.status(200).json({ success: true, data: result.rows });
   } catch (error) {
-    console.error("Error fetching doctor availability:", error)
-    return res.status(500).json({ success: false, error: "Internal Server Error" })
+    console.error("Error fetching doctor availability:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal Server Error" });
   }
-}
+};
 
 export const updateAvailability = async (req: Request, res: Response) => {
   const id = req.params.id;
@@ -176,7 +190,7 @@ export const updateAvailability = async (req: Request, res: Response) => {
 
 export const deleteAvailability = async (req: Request, res: Response) => {
   const id = req.params.id;
-console.log("deleting id......................",id)
+  console.log("deleting id......................", id);
   try {
     const result = await pool.query(
       `DELETE FROM doctor_availability WHERE id=$1 RETURNING *`,
@@ -191,5 +205,52 @@ console.log("deleting id......................",id)
   } catch (err) {
     console.error("Error deleting:", err);
     res.status(500).json({ success: false, error: "Database error" });
+  }
+};
+
+export const getDoctorPatients = async (req: Request, res: Response) => {
+  try {
+    const doctorId = req.user?.user_id;
+
+    console.log(doctorId, "ddddddddddddddddd");
+
+    if (!doctorId) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Doctor not logged in" });
+    }
+
+    const result = await pool.query(
+      `
+SELECT 
+  u.id AS patient_id,
+  u.name,
+  u.email,
+  u.phone,
+  u.created_at,
+  a.appointment_date AS last_visit
+FROM appointments a
+JOIN users u ON a.patient_id = u.id
+JOIN user_roles r ON u.role_id = r.role_id
+WHERE a.doctor_id = $1
+AND r.role_name = 'patient'
+ORDER BY u.name;
+
+      `,
+      [doctorId]
+    );
+
+    console.log(result)
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("Error fetching doctor patients:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Database error",
+    });
   }
 };

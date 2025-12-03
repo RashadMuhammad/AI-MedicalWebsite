@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.139:5000";
+=======
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+>>>>>>> 40f7b92b9b64580b7118737faac3967bcbe4a877
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const sessionId =
