@@ -70,4 +70,25 @@ END $$;
     END $$;
   `);
   console.log("✅ is_active column ensured");
-}
+
+
+await pool.query(`
+DO $$
+BEGIN
+  -- Only change column type if it exists and is not BYTEA already
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name='users' AND column_name='avatar' AND data_type != 'bytea'
+  ) THEN
+    ALTER TABLE users
+      ALTER COLUMN avatar TYPE BYTEA
+      USING avatar::BYTEA;
+  END IF;
+END
+$$;
+`);
+
+console.log("✅ avatar column ensured as BYTEA");
+
+};

@@ -1,7 +1,9 @@
 import express from "express";
 import { createUser, loginUser, getCountByRole,getAllUsers,getUsersByRole,getAllDoctor,updateUser } from "../controllers/userController";
 import { verifySession } from "../middleware/authMiddleware";
-
+import { upload } from "./upload";
+const app = express();
+app.use(express.json()); 
 const router = express.Router();
 
 // Routes
@@ -14,6 +16,6 @@ router.get("/count-by-role",verifySession, getCountByRole);
 router.get("/alluser",verifySession,getAllUsers );
 router.get("/by-role",verifySession,getUsersByRole);
 router.get("/doctors",verifySession,getAllDoctor);
-router.put("/:id", verifySession,updateUser);
+router.put("/:id", verifySession, upload.single("avatar"), updateUser);
 
 export default router;

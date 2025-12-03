@@ -15,6 +15,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: (user: User | null) => void; // add this
   isLoading: boolean;
   roles: UserRole[];
 }
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadSession = async () => {
       try {
         const sessionId = localStorage.getItem("sessionId");
+        console.log("secction",sessionId);
         if (!sessionId) {
           setIsLoading(false);
           return;
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: "GET",
           credentials: "include",
         });
+        console.log("sdbjhghkehd",data.user);
 
         if (res.ok) {
           setUser(data.user || data);
@@ -84,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.sessionId) {
         localStorage.setItem("sessionId", data.sessionId);
       }
+      console.log("sndjkjd",data.user);
 
       const normalizedUser = {
         ...data.user,
@@ -109,11 +113,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading, roles }}>
-      {!isLoading && children}
-    </AuthContext.Provider>
-  );
+return (
+  <AuthContext.Provider value={{ user, setUser, login, logout, isLoading, roles }}>
+    {!isLoading && children}
+  </AuthContext.Provider>
+);
+
 }
 
 export function useAuth() {

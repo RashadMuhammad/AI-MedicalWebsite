@@ -150,13 +150,24 @@ export const loginUser = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         role: user.role_name,
+        phone: user.phone,
+        avatar: user.avatar
+          ? `data:image/jpeg;base64,${Buffer.from(user.avatar).toString("base64")}`
+          : null, // ✅ corrected
+        specialization: user.specialization,
+        department_id: user.department_id,
+        dateOfBirth: user.date_of_birth,
+        blood_group: user.blood_group,
+        address: user.address,
+        emergency_contact: user.emergency_contact,
       },
       accessToken,
       refreshToken,
-      sessionId, 
+      sessionId,
     });
+
   } catch (err) {
-    console.error("Login error:", err); 
+    console.error("Login error:", err);
     return res.status(500).json({ error: "Server error" });
   }
 };
@@ -249,26 +260,105 @@ export const getAllDoctor = async (req: Request, res: Response) => {
 // ✅ Update user (PUT /api/users/:id)
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { name, email, role_id, department_id } = req.body;
 
-  // 🔹 Debug logging
-  console.log("Params ID:", id);
+  let {
+    name,
+    email,
+    password,
+    phone,
+    specialization,
+    department_id,
+    dateOfBirth,
+    blood_group,
+    address,
+    emergency_contact
+  } = req.body;
+
   console.log("Request body:", req.body);
-  console.log("Extracted fields:", { name, email, role_id, department_id });
+
+  department_id = department_id === "" ? null : Number(department_id);
+
+  const avatar = req.file ? req.file.buffer : null;
 
   try {
+    // Update user
     const result = await pool.query(
-      `UPDATE users
-       SET name = $1, email = $2, role_id = $3, department_id = $4
-       WHERE id = $5
-       RETURNING *`,
-      [name, email, role_id, department_id, id]
+      `
+      UPDATE users
+      SET
+        name = $1,
+        email = $2,
+        password = COALESCE($3, password),
+        phone = $4,
+        specialization = $5,
+        department_id = $6,
+        date_of_birth = $7,
+        blood_group = $8,
+        address = $9,
+        emergency_contact = $10,
+        avatar = COALESCE($11, avatar)
+      WHERE id = $12
+      RETURNING *
+      `,
+      [
+        name,
+        email,
+        password || null,
+        phone || null,
+        specialization || null,
+        department_id,
+        dateOfBirth || null,
+        blood_group || null,
+        address || null,
+        emergency_contact || null,
+        avatar,
+        id
+      ]
     );
 
-    if (result.rows.length === 0)
+    if (result.rows.length === 0) {
       return res.status(404).json({ message: "User not found" });
+    }
 
-    res.json({ message: "User updated successfully", user: result.rows[0] });
+    const updatedUser = result.rows[0];
+
+    // -------------------------------
+    // 🔥 FIXED: Fetch user role
+    // -------------------------------
+    const roleResult = await pool.query(
+  `SELECT r.role_name
+   FROM users u
+   JOIN user_roles r ON u.role_id = r.role_id
+   WHERE u.id = $1`,
+  [id]
+);
+
+
+    const roleName =
+      roleResult.rows.length > 0 ? roleResult.rows[0].role_name : "Unknown";
+
+    // -------------------------------
+    // 🔥 Respond
+    // -------------------------------
+    res.json({
+      message: "User updated successfully",
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role_name: roleName,
+        phone: updatedUser.phone,
+        avatar: updatedUser.avatar
+          ? `data:image/jpeg;base64,${Buffer.from(updatedUser.avatar).toString("base64")}`
+          : null,
+        specialization: updatedUser.specialization,
+        department_id: updatedUser.department_id,
+        dateOfBirth: updatedUser.date_of_birth,
+        blood_group: updatedUser.blood_group,
+        address: updatedUser.address,
+        emergency_contact: updatedUser.emergency_contact,
+      },
+    });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).json({ error: "Server error" });

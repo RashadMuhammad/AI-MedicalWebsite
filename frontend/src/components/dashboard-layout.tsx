@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -16,13 +15,8 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 
-import { Menu, X, Activity, User, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, X, Activity, Sun, Moon } from "lucide-react";
 import ProtectedRoute from "./auth/ProtectedRoute";
-
-interface Props {
-  children: ReactNode;
-  navigation: ReactNode;
-}
 
 interface Props {
   children: ReactNode;
@@ -37,14 +31,11 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
+  // Theme detection
   useEffect(() => {
     const saved = localStorage.getItem("theme") as "light" | "dark" | null;
-
     const detected =
-      saved ??
-      (window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light");
+      saved ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
 
     setTheme(detected);
     document.documentElement.classList.toggle("dark", detected === "dark");
@@ -57,19 +48,23 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
     document.documentElement.classList.toggle("dark", next === "dark");
   };
 
+  // Safe user info
   const userInfo = user
     ? {
         name: user.name || "User",
         email: user.email || "",
         role: user.role_name || "",
+        avatar: user.avatar || null,
       }
     : null;
 
   const initials = userInfo?.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
+    ? userInfo.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+    : "U";
 
   const handleLogout = async () => {
     await logout();
@@ -116,7 +111,11 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
                   className="rounded-full h-10 w-10 flex items-center justify-center"
                 >
                   <Avatar className="h-10 w-10 cursor-pointer">
-                    <AvatarFallback>{initials || "U"}</AvatarFallback>
+                    {userInfo?.avatar ? (
+                      <AvatarImage src={userInfo.avatar} alt={userInfo?.name || "User Avatar"} />
+                    ) : (
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    )}
                   </Avatar>
                 </button>
               </DropdownMenuTrigger>
@@ -125,9 +124,7 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{userInfo?.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {userInfo?.email}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{userInfo?.email}</p>
                   </div>
                 </DropdownMenuLabel>
 
@@ -135,9 +132,7 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
                 <DropdownMenuItem onClick={() => router.push("/profile")}>
                   Profile
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  Logout
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -146,11 +141,9 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
         {/* BODY */}
         <div className="flex flex-1">
           {/* Desktop Sidebar */}
-          <aside className="hidden md:block w-64 border-r bg-card p-4">
-            {navigation}
-          </aside>
+          <aside className="hidden md:block w-64 border-r bg-card p-4">{navigation}</aside>
 
-          {/* Mobile Sidebar */}
+          {/* Mobile Sidebar overlay */}
           {sidebarOpen && (
             <div
               className="fixed inset-0 bg-black/40 z-40 md:hidden"
@@ -158,6 +151,7 @@ export function DashboardLayout({ children, navigation, allowedRoles }: Props) {
             />
           )}
 
+          {/* Mobile Sidebar */}
           <div
             className={`fixed top-0 left-0 z-50 h-full w-64 bg-card border-r shadow-lg p-4 transform transition-transform md:hidden ${
               sidebarOpen ? "translate-x-0" : "-translate-x-full"

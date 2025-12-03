@@ -7,14 +7,23 @@ declare global {
     interface Request {
       user?: {
         session_id: string;
-        user_id: number;
+        id: number;
         name: string;
         email: string;
         role_name: string;
+        phone?: string;
+        avatar?: string | null;
+        specialization?: string | null;
+        department_id?: number | null;
+        dateOfBirth?: string | null;
+        blood_group?: string | null;
+        address?: string | null;
+        emergency_contact?: string | null;
       };
     }
   }
 }
+
 
 export const verifySession = async (req: Request, res: Response, next: NextFunction) => {
   try {
