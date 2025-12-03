@@ -3,17 +3,22 @@ import {
   createAvailability, 
   getDoctorsWithDepartments ,getDoctorAvailability,getAllDoctorAvailability,
   updateAvailability,
-  deleteAvailability
+  deleteAvailability,
+  getDoctorPatients
 } from "../controllers/doctorContoller"
 import { allowRoles } from "../middleware/roleMiddleware";
 
 const router = express.Router()
 
-router.post("/", createAvailability);
+router.get("/patients", allowRoles("doctor"), getDoctorPatients);
 router.get("/availability",allowRoles("doctor"), getAllDoctorAvailability);
 router.get("/doctors-with-department", getDoctorsWithDepartments);
 router.get("/:doctor_id", getDoctorAvailability);
+
+router.post("/", createAvailability);
+
 router.put("/:id", updateAvailability);
+
 router.delete("/:id", deleteAvailability);
 
 export default router

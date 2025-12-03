@@ -1,14 +1,24 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Calendar, Clock, Users, FileText, Activity, Search, Phone, Mail } from "lucide-react"
-import Link from "next/link"
+import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Calendar,
+  Clock,
+  Users,
+  FileText,
+  Activity,
+  Search,
+  Phone,
+  Mail,
+} from "lucide-react";
+import Link from "next/link";
+import { apiFetch } from "@/lib/api";
 
 function DoctorNavigation() {
   const navItems = [
@@ -18,7 +28,7 @@ function DoctorNavigation() {
     { href: "/doctor/records", icon: FileText, label: "Medical Records" },
     { href: "/doctor/prescriptions", icon: FileText, label: "Prescriptions" },
     { href: "/doctor/schedule", icon: Clock, label: "Schedule" },
-  ]
+  ];
 
   return (
     <>
@@ -31,54 +41,39 @@ function DoctorNavigation() {
         </Link>
       ))}
     </>
-  )
+  );
 }
 
-// Mock patient data
-const mockPatients = [
-  {
-    id: "p1",
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+1234567890",
-    bloodGroup: "O+",
-    lastVisit: "2025-09-15",
-    nextAppointment: "2025-10-05",
-    status: "active",
-  },
-  {
-    id: "p2",
-    name: "Jane Smith",
-    email: "jane.smith@email.com",
-    phone: "+1234567891",
-    bloodGroup: "A+",
-    lastVisit: "2025-09-28",
-    nextAppointment: null,
-    status: "active",
-  },
-  {
-    id: "p3",
-    name: "Robert Johnson",
-    email: "robert.j@email.com",
-    phone: "+1234567892",
-    bloodGroup: "B+",
-    lastVisit: "2025-08-20",
-    nextAppointment: "2025-10-12",
-    status: "active",
-  },
-]
-
 export default function PatientsPage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [patients, setPatients] = useState([]);
 
-  const filteredPatients = mockPatients.filter(
+  useEffect(() => {
+    const loadPatients = async () => {
+      try {
+        const { data } = await apiFetch("/api/doctor/patients");
+        if (data.success) {
+          setPatients(data.data);
+        }
+      } catch (err) {
+        console.error("Error loading patients:", err);
+      }
+    };
+
+    loadPatients();
+  }, []);
+
+  const filteredPatients = patients.filter(
     (patient) =>
       patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      patient.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <DashboardLayout navigation={<DoctorNavigation />} allowedRoles={["doctor"]}>
+    <DashboardLayout
+      navigation={<DoctorNavigation />}
+      allowedRoles={["doctor"]}
+    >
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Patients</h1>
@@ -135,7 +130,9 @@ export default function PatientsPage() {
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
                       <span>Last Visit: {patient.lastVisit}</span>
-                      {patient.nextAppointment && <span>• Next: {patient.nextAppointment}</span>}
+                      {patient.nextAppointment && (
+                        <span>• Next: {patient.nextAppointment}</span>
+                      )}
                     </div>
                     <div className="mt-4 flex gap-2">
                       <Link href="/doctor/records">
@@ -168,5 +165,5 @@ export default function PatientsPage() {
         )}
       </div>
     </DashboardLayout>
-  )
+  );
 }
