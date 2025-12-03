@@ -7,6 +7,7 @@
     "migrate": "npx ts-node src/migrations/index.ts"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",

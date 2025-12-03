@@ -228,13 +228,16 @@ SELECT
   u.email,
   u.phone,
   u.created_at,
-  a.appointment_date AS last_visit
+  MAX(a.appointment_date) AS last_visit
 FROM appointments a
 JOIN users u ON a.patient_id = u.id
 JOIN user_roles r ON u.role_id = r.role_id
 WHERE a.doctor_id = $1
 AND r.role_name = 'patient'
+GROUP BY 
+  u.id, u.name, u.email, u.phone, u.created_at
 ORDER BY u.name;
+
 
       `,
       [doctorId]
