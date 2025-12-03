@@ -4,7 +4,7 @@ export async function createSessionsTable() {
   try {
     console.log("session hi")
     await pool.query(`
-      CREATE TABLE sessions (
+      CREATE TABLE IF NOT EXISTS sessions (
       session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_id UUID  REFERENCES users(id),
       access_token TEXT NOT NULL,

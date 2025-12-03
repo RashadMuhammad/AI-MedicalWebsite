@@ -92,6 +92,7 @@ export default function ServicesPage() {
     const fetchServices = async () => {
       try {
         const { data } = await apiFetch("/api/services")
+        console.log("Fetched services:", data)
         setServices(data)
       } catch (err) {
         console.error("Failed to fetch services:", err)

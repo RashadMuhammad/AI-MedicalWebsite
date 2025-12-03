@@ -8,6 +8,7 @@ import departmentRoutes from "./routes/departmentRoutes"
 import doctorRoutes from "./routes/doctorRoutes"
 import appointmentsRoutes from "./routes/appointmentsRoutes"
 import sessionRoutes from "./routes/sessionRoutes"
+import serviceRoutes from "./routes/serviceRoutes";
 import { verifySession } from "./middleware/authMiddleware";
 
 
@@ -32,5 +33,6 @@ app.use("/api/roles",verifySession, userRoleRoutes);
 app.use("/api/departments",verifySession, departmentRoutes);
 app.use("/api/doctor",verifySession,doctorRoutes);
 app.use("/api/appointments",verifySession, appointmentsRoutes);
+app.use("/api/services",verifySession, serviceRoutes );
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
