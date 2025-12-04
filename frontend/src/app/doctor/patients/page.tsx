@@ -54,6 +54,7 @@ export default function PatientsPage() {
         const { data } = await apiFetch("/api/doctor/patients");
         if (data.success) {
           setPatients(data.data);
+          console.log(data)
         }
       } catch (err) {
         console.error("Error loading patients:", err);
@@ -129,7 +130,7 @@ export default function PatientsPage() {
                       </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>Last Visit: {patient.lastVisit}</span>
+                      <span>Last Visit: {patient.last_visit}</span>
                       {patient.nextAppointment && (
                         <span>• Next: {patient.nextAppointment}</span>
                       )}
