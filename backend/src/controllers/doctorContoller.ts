@@ -227,23 +227,37 @@ SELECT
   u.name,
   u.email,
   u.phone,
-  u.created_at,
-  MAX(a.appointment_date) AS last_visit
+  u.blood_group,
+  u.created_at::date AS created_at,
+  MAX(a.appointment_date)::date AS last_visit,
+
+  -- Get next upcoming appointment of patient for this doctor
+  (
+    SELECT MIN(a2.appointment_date)::date
+    FROM appointments a2
+    WHERE a2.patient_id = u.id
+      AND a2.doctor_id = $1
+      AND a2.status = 'Scheduled'
+      AND a2.appointment_date::date > CURRENT_DATE
+  ) AS next_appointment
+
 FROM appointments a
 JOIN users u ON a.patient_id = u.id
 JOIN user_roles r ON u.role_id = r.role_id
-WHERE a.doctor_id = $1
-AND r.role_name = 'patient'
-GROUP BY 
-  u.id, u.name, u.email, u.phone, u.created_at
-ORDER BY u.name;
 
+WHERE a.doctor_id = $1
+  AND r.role_name = 'patient'
+
+GROUP BY 
+  u.id, u.name, u.email, u.phone, u.blood_group, u.created_at
+
+ORDER BY u.name;
 
       `,
       [doctorId]
     );
 
-    console.log(result)
+    console.log(result);
 
     return res.status(200).json({
       success: true,

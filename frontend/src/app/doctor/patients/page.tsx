@@ -45,8 +45,19 @@ function DoctorNavigation() {
 }
 
 export default function PatientsPage() {
+  type Patient = {
+    patient_id: string;
+    name: string;
+    email: string;
+    phone: string;
+    blood_group: string;
+    last_visit: string | null;
+    next_appointment: string | null;
+    status?: string;
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
   useEffect(() => {
     const loadPatients = async () => {
@@ -54,7 +65,6 @@ export default function PatientsPage() {
         const { data } = await apiFetch("/api/doctor/patients");
         if (data.success) {
           setPatients(data.data);
-          console.log(data)
         }
       } catch (err) {
         console.error("Error loading patients:", err);
@@ -99,7 +109,7 @@ export default function PatientsPage() {
         {/* Patients List */}
         <div className="grid gap-4 md:grid-cols-2">
           {filteredPatients.map((patient) => (
-            <Card key={patient.id}>
+            <Card key={patient.patient_id}>
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
                   <Avatar className="h-12 w-12">
@@ -126,13 +136,24 @@ export default function PatientsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Activity className="h-3 w-3" />
-                        Blood Group: {patient.bloodGroup}
+                        Blood Group: {patient.blood_group}
                       </div>
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                      <span>Last Visit: {patient.last_visit}</span>
-                      {patient.nextAppointment && (
-                        <span>• Next: {patient.nextAppointment}</span>
+                    <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      <div>
+                        Last Visit:{" "}
+                        {patient.last_visit
+                          ? new Date(patient.last_visit).toLocaleDateString()
+                          : "—"}
+                      </div>
+
+                      {patient.next_appointment && (
+                        <div>
+                          Next Appointment:{" "}
+                          {new Date(
+                            patient.next_appointment
+                          ).toLocaleDateString()}
+                        </div>
                       )}
                     </div>
                     <div className="mt-4 flex gap-2">
