@@ -6,16 +6,16 @@ export interface User {
   id: string
   user_id?: string
   email: string
-  password?: string // for authentication (optional when fetched)
+  password?: string 
   name: string
-  roleId: number // FK to user_roles table
-  role_name?: string // optional populated object from join
+  roleId: number 
+  role_name?: string 
   phone?: string
   avatar?: string
-  specialization?: string // for doctors
-  department_id?: number // for doctors/admin
-  dateOfBirth?: string // for patients
-  blood_group?: string // for patients
+  specialization?: string 
+  department_id?: number 
+  dateOfBirth?: string 
+  blood_group?: string 
   address?: string
   emergency_contact?: string
   created_at?: string
@@ -23,7 +23,7 @@ export interface User {
 }
  export interface Role {
   role_name: string;
-  role_description?: string; // optional
+  role_description?: string; 
 }
 
 // Appointment interface

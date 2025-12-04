@@ -37,12 +37,14 @@ export const getSessionInfo = async (req: Request, res: Response) => {
     const user = result.rows[0];
 
     // Convert avatar BYTEA to Base64 if exists
-    const avatarBase64 = user.avatar ? Buffer.from(user.avatar).toString("base64") : null;
+    const avatarBase64 = user.avatar
+      ? Buffer.from(user.avatar).toString("base64")
+      : null;
 
     // Build the user object
     req.user = {
       session_id: user.session_id,
-      id: user.user_id,
+      user_id: user.user_id,
       name: user.name,
       email: user.email,
       role_name: user.role_name,
@@ -57,7 +59,6 @@ export const getSessionInfo = async (req: Request, res: Response) => {
     };
 
     return res.json({ user: req.user });
-
   } catch (err) {
     console.error("Session lookup error:", err);
     return res.status(500).json({ error: "Server error" });

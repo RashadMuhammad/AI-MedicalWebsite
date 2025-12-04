@@ -157,7 +157,7 @@ export default function PatientsPage() {
                       )}
                     </div>
                     <div className="mt-4 flex gap-2">
-                      <Link href="/doctor/records">
+                      <Link href={`/doctor/records?patientId=${patient.patient_id}`}>
                         <Button size="sm" variant="outline">
                           <FileText className="mr-2 h-4 w-4" />
                           View Records

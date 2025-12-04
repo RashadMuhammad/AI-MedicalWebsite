@@ -20,8 +20,9 @@ app.use(cors({
   origin: "http://localhost:3000",  
   credentials: true,                
 }));
-app.use(express.json()); // parses application/json
-app.use(express.text()); // parses text/plain
+
+app.use(express.json()); 
+app.use(express.text()); 
 // Routes
 app.get("/", async (_req, res) => {
     const result = await pool.query("SELECT current_database(), current_user");
@@ -34,5 +35,6 @@ app.use("/api/departments",verifySession, departmentRoutes);
 app.use("/api/doctor",verifySession,doctorRoutes);
 app.use("/api/appointments",verifySession, appointmentsRoutes);
 app.use("/api/services",verifySession, serviceRoutes );
+
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -41,7 +41,6 @@ export const createAvailability = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: "Database error" });
   }
 };
-
 // Get all availability for a doctor
 export const getDoctorAvailability = async (req: Request, res: Response) => {
   let doctor_id = req.params.doctor_id?.trim();
@@ -84,6 +83,7 @@ export const getDoctorAvailability = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, error: "Database error" });
   }
 };
+
 export const getDoctorsWithDepartments = async (
   req: Request,
   res: Response
@@ -117,6 +117,7 @@ export const getDoctorsWithDepartments = async (
     });
   }
 };
+
 export const getAllDoctorAvailability = async (req: Request, res: Response) => {
   try {
     const query = `
@@ -269,5 +270,74 @@ ORDER BY u.name;
       success: false,
       error: "Database error",
     });
+  }
+};
+
+export const getPatientMedicalRecords = async (req: Request, res: Response) => {
+  const patientId = req.query.patientId as string | undefined;
+
+  try {
+    let query = `
+      SELECT 
+          a.appointment_id AS id,
+          a.patient_id,
+          u.name AS patient_name,
+
+          a.appointment_date AS date,
+          a.created_at
+      FROM appointments a
+      JOIN users u ON a.patient_id = u.id
+      WHERE 1=1
+    `;
+
+    const params: any[] = [];
+
+    // Filter by patient
+    if (patientId) {
+      query += ` AND a.patient_id = $1`;
+      params.push(patientId);
+    }
+
+    query += ` ORDER BY a.created_at DESC`;
+
+    const result = await pool.query(query, params);
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (err) {
+    console.error("Error fetching medical records:", err);
+    return res.status(500).json({
+      success: false,
+      error: "Database error",
+    });
+  }
+};
+
+export const createMedicalRecord = async (req: Request, res: Response) => {
+  const { patientId, patientName, diagnosis, symptoms, prescription, notes } =
+    req.body;
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO appointments 
+        (patient_id, doctor_id, appointment_date, diagnosis, symptoms, prescription, notes)
+       VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        patientId,
+        req.user?.user_id,
+        diagnosis,
+        symptoms,
+        prescription,
+        notes,
+      ]
+    );
+
+    return res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error("Medical record insert error", err);
+    return res.status(500).json({ success: false });
   }
 };
