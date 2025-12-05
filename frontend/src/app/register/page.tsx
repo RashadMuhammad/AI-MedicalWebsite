@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 type Status = {
   type: "success" | "warning" | "error";
@@ -27,7 +28,6 @@ export default function RegisterPage() {
     role_name: "patient",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState<Status>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const router = useRouter();
 
@@ -63,7 +63,6 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setStatus(null);
 
     try {
       const { res, data } = await apiFetch("/api/users/register", {
@@ -75,10 +74,7 @@ export default function RegisterPage() {
       console.log("Response:", data, "Status:", res.status);
 
       if (res.status === 201) {
-        setStatus({
-          type: "success",
-          message: data.message || "User created!",
-        });
+        toast("User created Succesfully!");
         setFormData({
           role_name: "patient",
           name: "",
@@ -93,15 +89,12 @@ export default function RegisterPage() {
           specialization: "",
         });
       } else if (res.status === 400) {
-        setStatus({ type: "warning", message: data.error || "Invalid input" });
+        toast("Invalid Input");
       } else {
-        setStatus({ type: "error", message: data.error || "Server error" });
+        toast("Server error");
       }
     } catch (err: any) {
-      setStatus({
-        type: "error",
-        message: err.message || "Something went wrong",
-      });
+      toast("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
@@ -111,17 +104,9 @@ export default function RegisterPage() {
     const sessionId = localStorage.getItem("sessionId");
 
     if (sessionId) {
-
       router.push("/");
     }
   }, []);
-
-  useEffect(() => {
-    if (status) {
-      const timer = setTimeout(() => setStatus(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [status]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 p-4 transition-colors duration-300">
@@ -152,20 +137,6 @@ export default function RegisterPage() {
         </CardHeader>
 
         <CardContent>
-          {status && (
-            <div
-              className={`p-3 rounded-md mb-4 text-white text-center ${
-                status.type === "success"
-                  ? "bg-green-500"
-                  : status.type === "warning"
-                  ? "bg-yellow-500"
-                  : "bg-red-500"
-              }`}
-            >
-              {status.message}
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Label>Full Name</Label>

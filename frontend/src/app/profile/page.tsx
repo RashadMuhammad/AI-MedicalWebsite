@@ -14,13 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Camera, User, Sun, Moon } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiFetch } from "@/lib/api";
 
 export default function ProfilePage() {
   const { user, setUser } = useAuth();
-  const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
 
   const [avatar, setAvatar] = useState<File | null>(null);
@@ -110,18 +109,11 @@ export default function ProfilePage() {
       setUser(data.user);
       setAvatarPreview(data.user.avatar);
 
-      toast({
-        title: "Profile Updated",
-        description: "Your profile information has been saved successfully.",
-      });
+      toast("Your profile information has been saved successfully.");
 
       setIsEditing(false);
     } catch (err) {
-      toast({
-        title: "Error",
-        description: (err as Error).message,
-        variant: "destructive",
-      });
+      toast((err as Error).message);
     }
   };
 

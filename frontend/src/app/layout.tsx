@@ -7,6 +7,8 @@ import { AuthProvider } from "@/lib/auth-context"
 import { Toaster } from "@/components/ui/toaster"
 import { Suspense } from "react"
 import "./globals.css"
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export const metadata: Metadata = {
   title: "MediMind AI - Hospital Management System",
@@ -25,7 +27,7 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <AuthProvider>
             {children}
-            <Toaster />
+            <ToastContainer position="top-right" autoClose={2000} />
           </AuthProvider>
         </Suspense>
         <Analytics />

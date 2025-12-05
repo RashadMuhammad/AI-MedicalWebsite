@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
 // ------------------ NAVIGATION ------------------
 function DoctorNavigation() {
@@ -112,12 +112,22 @@ export default function SchedulePage() {
         return;
       }
 
-      const payload = {
-        doctor_id: user?.user_id,
+      const newSlot = {
         day_of_week: formData.day,
         start_time: formData.start,
         end_time: formData.end,
         room_number: formData.room_number,
+      };
+
+      // ---- CHECK CONFLICT ----
+      if (hasConflict(newSlot, availability)) {
+        toast.error("This time slot conflicts with an existing schedule.");
+        return;
+      }
+
+      const payload = {
+        doctor_id: user?.user_id,
+        ...newSlot,
         is_available: formData.available,
       };
 
@@ -141,14 +151,23 @@ export default function SchedulePage() {
     if (!editId) return;
 
     try {
+      const updatedSlot = {
+        day_of_week: formData.day,
+        start_time: formData.start,
+        end_time: formData.end,
+        room_number: formData.room_number,
+      };
+
+      if (hasConflictForUpdate(updatedSlot, availability, editId)) {
+        toast.error("This time slot overlaps with another availability.");
+        return;
+      }
+
       const response = await apiFetch(`/api/doctor/${editId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          day_of_week: formData.day,
-          start_time: formData.start,
-          end_time: formData.end,
-          room_number: formData.room_number,
+          ...updatedSlot,
           is_available: formData.available,
         }),
       });
@@ -160,6 +179,7 @@ export default function SchedulePage() {
         toast.success("Updated");
 
         setEditId(null);
+
         const btn = document.querySelector(
           "[data-edit-dialog-btn]"
         ) as HTMLElement | null;
@@ -206,7 +226,53 @@ export default function SchedulePage() {
     {} as Record<string, any[]>
   );
 
-  console.log(appointmentsByDate,"fefrwergfrtg")
+  const hasConflict = (newSlot: any, existing: any[]) => {
+    return existing.some((a) => {
+      // Only same day
+      if (a.day_of_week !== newSlot.day_of_week) return false;
+
+      const startA = a.start_time;
+      const endA = a.end_time;
+      const startB = newSlot.start_time;
+      const endB = newSlot.end_time;
+
+      // TIME OVERLAP CONDITION
+      const overlap = startB < endA && endB > startA;
+
+      // Time conflict
+      if (overlap) return true;
+
+      // Room conflict (same room + overlap)
+      if (overlap && a.room_number === newSlot.room_number) return true;
+
+      return false;
+    });
+  };
+
+  const hasConflictForUpdate = (
+    newSlot: any,
+    existing: any[],
+    editId: number
+  ) => {
+    return existing.some((a) => {
+      if (a.id === editId) return false;
+
+      if (a.day_of_week !== newSlot.day_of_week) return false;
+
+      const startA = a.start_time;
+      const endA = a.end_time;
+      const startB = newSlot.start_time;
+      const endB = newSlot.end_time;
+
+      const overlap = startB < endA && endB > startA;
+
+      if (overlap) return true;
+
+      if (overlap && a.room_number === newSlot.room_number) return true;
+
+      return false;
+    });
+  };
 
   if (userLoading || loading) {
     return (
@@ -363,7 +429,6 @@ export default function SchedulePage() {
                     Room: {a.room_number}
                   </div>
                 </div>
-                
 
                 <div className="flex gap-2">
                   <Button
@@ -429,7 +494,12 @@ export default function SchedulePage() {
                       <div className="flex items-center gap-3">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <p className="font-medium">{apt.time.split("-").map((t: string) => t.slice(0, 5)).join(" - ")}</p>
+                          <p className="font-medium">
+                            {apt.time
+                              .split("-")
+                              .map((t: string) => t.slice(0, 5))
+                              .join(" - ")}
+                          </p>
                           <p className="text-sm text-muted-foreground">
                             Patient Name: {apt.patientname}
                           </p>

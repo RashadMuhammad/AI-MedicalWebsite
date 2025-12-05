@@ -40,7 +40,7 @@ import {
   Edit as EditIcon,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-toastify";
 import type { Role, User, Department } from "@/lib/types";
 
 type Status = {
@@ -80,7 +80,6 @@ function AdminNavigation() {
 }
 
 export default function UsersPage() {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<string>("");
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -95,7 +94,7 @@ export default function UsersPage() {
   const [status, setStatus] = useState<Status>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
-  const [selectedDept, setSelectedDept] = useState<string>(""); 
+  const [selectedDept, setSelectedDept] = useState<string>("");
 
   // EDIT state
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -130,7 +129,7 @@ export default function UsersPage() {
   const fetchRoles = async () => {
     try {
       const { data } = await apiFetch("/api/roles");
-      console.log("rashadddddd",data)
+      console.log("rashadddddd", data);
       setRoles(data);
     } catch (err) {
       console.error("Error fetching roles:", err);
@@ -163,7 +162,6 @@ export default function UsersPage() {
     return () => clearInterval(intervalId);
   }, [activeTab]);
 
-
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -175,10 +173,7 @@ export default function UsersPage() {
         body: JSON.stringify(formData),
       });
       if (res.status === 201) {
-        toast({
-          title: "✅ User Added",
-          description: "New user has been added successfully.",
-        });
+        toast("New user has been added successfully.");
 
         setSelectedRole("");
         setIsAddUserOpen(false);
@@ -237,22 +232,16 @@ export default function UsersPage() {
         body: JSON.stringify(editData),
       });
       if (res.ok) {
-        toast({
-          title: "✅ User Updated",
-          description: "User details updated successfully.",
-        });
+        toast("User details updated successfully.");
         setIsEditOpen(false);
         setEditData(null);
         fetchUsersByRole();
       } else {
-        toast({
-          title: "❌ Update failed",
-          description: data?.error || "Server error",
-        });
+        toast(data?.error || "Server error");
       }
     } catch (err) {
       console.error("Update user error:", err);
-      toast({ title: "❌ Error", description: "Could not update user" });
+      toast("Could not update user");
     } finally {
       setIsSubmitting(false);
     }

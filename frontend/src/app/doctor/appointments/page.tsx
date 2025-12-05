@@ -18,6 +18,7 @@ import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 import { Appointment } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
+import { toast } from "react-toastify";
 
 function DoctorNavigation() {
   const navItems = [
@@ -58,14 +59,12 @@ const getNextStatuses = (currentStatus: string) => {
 
 export default function DoctorAppointmentsPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
     const userId = user?.user_id ?? user?.id;
 
     if (!userId) {
@@ -91,11 +90,7 @@ export default function DoctorAppointmentsPage() {
         }
       } catch (error) {
         console.error(error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch appointments",
-          variant: "destructive",
-        });
+        toast("Failed to fetch appointments");
       } finally {
         setLoading(false);
       }
@@ -126,10 +121,7 @@ export default function DoctorAppointmentsPage() {
 
       if (res.ok) {
         const updatedStatus = data?.status || data?.data?.status || newStatus;
-        toast({
-          title: "Status Updated",
-          description: `Appointment marked as ${updatedStatus}.`,
-        });
+        toast(`Appointment marked as ${updatedStatus}.`);
 
         setAppointments((prev) =>
           prev.map((apt) =>
@@ -139,19 +131,11 @@ export default function DoctorAppointmentsPage() {
           )
         );
       } else {
-        toast({
-          title: "Error",
-          description: data?.error || "Failed to update status.",
-          variant: "destructive",
-        });
+        toast(data?.error || "Failed to update status.");
       }
     } catch (error) {
       console.error("Status change error:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong while updating status.",
-        variant: "destructive",
-      });
+      toast("Something went wrong while updating status.");
     }
   };
 
@@ -252,7 +236,9 @@ export default function DoctorAppointmentsPage() {
                           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {new Date(appointment.appointment_date).toLocaleDateString()}
+                              {new Date(
+                                appointment.appointment_date
+                              ).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
