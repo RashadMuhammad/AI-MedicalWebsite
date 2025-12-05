@@ -25,6 +25,8 @@ function DoctorNavigation() {
     { href: "/doctor/appointments", icon: Calendar, label: "Appointments" },
     { href: "/doctor/patients", icon: Calendar, label: "Patients" },
     { href: "/doctor/records", icon: FileText, label: "Medical Records" },
+    { href: "/doctor/prescriptions", icon: FileText, label: "Prescriptions" },
+    { href: "/doctor/schedule", icon: Clock, label: "Schedule" },
   ];
 
   return (
@@ -63,23 +65,26 @@ export default function DoctorAppointmentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.id) return; // wait for user to load
+
+    const userId = user?.user_id ?? user?.id;
+
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchAppointments = async () => {
       try {
         const sessionId = localStorage.getItem("sessionId");
         if (!sessionId) return;
 
-        const { data } = await apiFetch(
-          `/api/appointments/doctor/${user.id}`, 
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${sessionId}`,
-            },
-          }
-        );
+        const { data } = await apiFetch(`/api/appointments/doctor/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${sessionId}`,
+          },
+        });
 
         if (data.success) {
           setAppointments(data.data);
@@ -247,7 +252,7 @@ export default function DoctorAppointmentsPage() {
                           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {appointment.appointment_date}
+                              {new Date(appointment.appointment_date).toLocaleDateString()}
                             </div>
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />

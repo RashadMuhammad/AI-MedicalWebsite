@@ -47,12 +47,11 @@ function DoctorNavigation() {
 export default function DoctorDashboard() {
   const { user } = useAuth()
 
-  // Filter data for current doctor
   const doctorAppointments = mockAppointments.filter((apt) => apt.doctorId === user?.id)
   const todayAppointments = doctorAppointments.filter((apt) => apt.status === "scheduled")
   const completedToday = doctorAppointments.filter((apt) => apt.status === "completed")
 
-  // Get unique patients
+
   const uniquePatients = new Set(doctorAppointments.map((apt) => apt.patientId))
 
   return (
@@ -62,7 +61,7 @@ export default function DoctorDashboard() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.name}</h1>
           <p className="text-muted-foreground">
-            {user?.specialization} • {user?.department_id}
+            {user?.specialization} 
           </p>
         </div>
 

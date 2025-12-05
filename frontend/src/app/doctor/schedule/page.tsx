@@ -20,50 +20,6 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
 import { toast } from "sonner";
 
-// ------------------ MOCK DATA ------------------
-const mockAppointments = [
-  {
-    id: "apt1",
-    doctorId: "a47a268d-cab1-4a7e-9e43-eccb9bb016a0",
-    patientName: "John Doe",
-    date: "2025-10-22",
-    time: "09:00 - 09:30",
-    type: "in-person",
-  },
-  {
-    id: "apt2",
-    doctorId: "a47a268d-cab1-4a7e-9e43-eccb9bb016a0",
-    patientName: "Sarah Lee",
-    date: "2025-10-22",
-    time: "10:00 - 10:30",
-    type: "teleconsultation",
-  },
-  {
-    id: "apt3",
-    doctorId: "a47a268d-cab1-4a7e-9e43-eccb9bb016a0",
-    patientName: "Michael Brown",
-    date: "2025-10-23",
-    time: "11:00 - 11:30",
-    type: "in-person",
-  },
-  {
-    id: "apt4",
-    doctorId: "a47a268d-cab1-4a7e-9e43-eccb9bb016a0",
-    patientName: "Emma Watson",
-    date: "2025-10-24",
-    time: "14:00 - 14:30",
-    type: "teleconsultation",
-  },
-  {
-    id: "apt5",
-    doctorId: "a47a268d-cab1-4a7e-9e43-eccb9bb016a0",
-    patientName: "David Miller",
-    date: "2025-10-25",
-    time: "16:00 - 16:30",
-    type: "in-person",
-  },
-];
-
 // ------------------ NAVIGATION ------------------
 function DoctorNavigation() {
   const navItems = [
@@ -91,68 +47,79 @@ function DoctorNavigation() {
 
 // ------------------ MAIN COMPONENT ------------------
 export default function SchedulePage() {
-  const { user } = useAuth();
-  const sessionId = localStorage.getItem("sessionId");
+  const { user, isLoading: userLoading } = useAuth();
 
-  // Filter appointments for logged-in doctor
-  const doctorAppointments = mockAppointments.filter(
-    (apt) => apt.doctorId === user?.id
-  );
-
-  // Group appointments by date
-  const appointmentsByDate = doctorAppointments.reduce((acc, apt) => {
-    if (!acc[apt.date]) acc[apt.date] = [];
-    acc[apt.date].push(apt);
-    return acc;
-  }, {} as Record<string, typeof doctorAppointments>);
-
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     day: "Monday",
     start: "09:00",
     end: "17:00",
-    room: "",
+    room_number: "",
     available: true,
   });
+
   const [editId, setEditId] = useState<number | null>(null);
 
-  // Fetch availability from backend
+  // ------------------ FETCH DATA ------------------
   useEffect(() => {
-    if (!user?.id) return;
+    // Only run when user is loaded
+    if (userLoading) return;
 
-    const fetchAvailability = async () => {
+    const userId = user?.user_id ?? user?.id;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) {
+      setLoading(false);
+      return;
+    }
+
+    const load = async () => {
       try {
-        const response = await apiFetch(`/api/doctor/${user.id}`);
-        if (response.data?.success) {
-          setAvailability(response.data.data || []);
+        setLoading(true);
+
+        const availRes = await apiFetch(`/api/doctor/${userId}`);
+        if (availRes.data?.success) {
+          setAvailability(availRes.data.data || []);
         }
-      } catch (error) {
-        console.error("Error fetching availability:", error);
+
+        const aptRes = await apiFetch(`/api/appointments/doctor/${userId}`, {
+          headers: { Authorization: `Bearer ${sessionId}` },
+        });
+
+        if (aptRes.data?.success) {
+          setAppointments(aptRes.data.data || []);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchAvailability();
-  }, [user?.id]);
+    load();
+  }, [userLoading, user?.id, user?.user_id]);
 
-  // Save new availability
   const handleFormSubmit = async () => {
     try {
       const sessionId = localStorage.getItem("sessionId");
       if (!sessionId) {
-        alert("Session ID not found — please login again.");
+        alert("Session expired. Login again.");
         return;
       }
 
       const payload = {
-        doctor_id: user?.id,
+        doctor_id: user?.user_id,
         day_of_week: formData.day,
         start_time: formData.start,
         end_time: formData.end,
-        room_number: formData.room,
+        room_number: formData.room_number,
         is_available: formData.available,
       };
-
-      console.log("Sending:", payload);
 
       const response = await apiFetch("/api/doctor", {
         method: "POST",
@@ -162,25 +129,14 @@ export default function SchedulePage() {
 
       if (response.data?.success) {
         setAvailability((prev) => [...prev, response.data.data]);
-      } else {
-        alert("Failed to save availability");
+        toast.success("Availability saved");
       }
-    } catch (err) {
-      console.error("Error saving availability:", err);
-      alert("Error saving availability");
+    } catch {
+      toast.error("Error saving availability");
     }
   };
 
-  // Format time as AM/PM
-  const formatTime = (timeString: string) => {
-    if (!timeString) return "";
-    const [hours, minutes] = timeString.split(":");
-    const h = parseInt(hours, 10);
-    const ampm = h >= 12 ? "PM" : "AM";
-    const formattedHour = h % 12 || 12;
-    return `${formattedHour}:${minutes} ${ampm}`;
-  };
-
+  // ------------ UPDATE AVAILABILITY ------------
   const handleUpdate = async () => {
     if (!editId) return;
 
@@ -192,93 +148,107 @@ export default function SchedulePage() {
           day_of_week: formData.day,
           start_time: formData.start,
           end_time: formData.end,
-          room_number: formData.room,
+          room_number: formData.room_number,
           is_available: formData.available,
         }),
       });
 
       if (response.data?.success) {
         setAvailability((prev) =>
-          prev.map((item) => (item.id === editId ? response.data.data : item))
+          prev.map((a) => (a.id === editId ? response.data.data : a))
         );
-
-        toast.success("Availability updated");
+        toast.success("Updated");
 
         setEditId(null);
-        (
-          document.querySelector("[data-edit-dialog-btn]") as HTMLElement
-        )?.click();
+        const btn = document.querySelector(
+          "[data-edit-dialog-btn]"
+        ) as HTMLElement | null;
+        btn?.click();
       }
-    } catch (error) {
-      console.error("Update error:", error);
+    } catch {
+      toast.error("Error updating availability");
     }
   };
 
-  const handleDelete = async (id: Number) => {
+  // ------------ DELETE AVAILABILITY ------------
+  const handleDelete = async (id: number) => {
     try {
       const response = await apiFetch(`/api/doctor/${id}`, {
         method: "DELETE",
       });
 
       if (response.data?.success) {
-        setAvailability((prev) => prev.filter((x) => x.id !== id));
+        setAvailability((prev) => prev.filter((a) => a.id !== id));
+        toast.success("Deleted");
       }
-    } catch (error) {
-      console.error("Delete error:", error);
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
-  // ------------------ JSX ------------------
+  // ------------------ FORMAT TIME ------------------
+  const formatTime = (t: string) => {
+    if (!t) return "";
+    const [h, m] = t.split(":");
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const display = hour % 12 || 12;
+    return `${display}:${m} ${ampm}`;
+  };
+
+  // ------------ GROUP APPOINTMENTS BY DATE -------------
+  const appointmentsByDate: Record<string, any[]> = appointments.reduce(
+    (acc, a) => {
+      if (!acc[a.appointment_date]) acc[a.appointment_date] = [];
+      acc[a.appointment_date].push(a);
+      return acc;
+    },
+    {} as Record<string, any[]>
+  );
+
+  console.log(appointmentsByDate,"fefrwergfrtg")
+
+  if (userLoading || loading) {
+    return (
+      <DashboardLayout navigation={<DoctorNavigation />}>
+        <p>Loading...</p>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout navigation={<DoctorNavigation />}>
       <div className="space-y-6">
-        {/* Header + Set Availability */}
+        {/* HEADER */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Schedule</h1>
-            <p className="text-muted-foreground">Your appointment calendar</p>
+            <h1 className="text-3xl font-bold">Schedule</h1>
+            <p className="text-muted-foreground">
+              Your availability & appointments
+            </p>
           </div>
 
           <Dialog.Root>
-            {/* Hidden trigger for Edit */}
-            <Dialog.Trigger
-              data-edit-dialog-btn
-              className="hidden"
-            ></Dialog.Trigger>
             <Dialog.Trigger asChild>
               <Button variant="outline">Set Availability</Button>
             </Dialog.Trigger>
+
+            {/* Hidden trigger for edit */}
+            <Dialog.Trigger data-edit-dialog-btn className="hidden" />
+
             <Dialog.Portal>
-              <Dialog.Overlay
-                className="    fixed inset-0
-                bg-gradient-to-b from-black/10 to-black/30
-                z-[9998]"
-              />
-              <Dialog.Content
-                className="
-    fixed top-1/2 left-1/2 w-[400px]
-    -translate-x-1/2 -translate-y-1/2
-    rounded-md
-    bg-white dark:bg-neutral-900
-    text-black dark:text-white
-    p-6 shadow-lg
-    z-[9999]
-  "
-              >
+              <Dialog.Overlay className="fixed inset-0 bg-black/30" />
+              <Dialog.Content className="fixed top-1/2 left-1/2 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-md bg-white p-6 shadow-lg dark:bg-neutral-900">
                 <Dialog.Title className="text-lg font-bold">
-                  Set Availability
+                  {editId ? "Edit Availability" : "Set Availability"}
                 </Dialog.Title>
 
                 <div className="space-y-4 mt-4">
+                  {/* DAY */}
                   <div>
-                    <Label className="dark:text-white">Day</Label>
+                    <Label>Day</Label>
                     <select
-                      className="
-          w-full border rounded p-2
-          bg-white dark:bg-neutral-800
-          text-black dark:text-white
-          border-gray-300 dark:border-neutral-700
-        "
+                      className="w-full border rounded p-2"
                       value={formData.day}
                       onChange={(e) =>
                         setFormData({ ...formData, day: e.target.value })
@@ -293,23 +263,17 @@ export default function SchedulePage() {
                         "Saturday",
                         "Sunday",
                       ].map((d) => (
-                        <option
-                          key={d}
-                          value={d}
-                          className="bg-white dark:bg-neutral-800 text-black dark:text-white"
-                        >
-                          {d}
-                        </option>
+                        <option key={d}>{d}</option>
                       ))}
                     </select>
                   </div>
 
+                  {/* TIME */}
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <Label className="dark:text-white">Start Time</Label>
+                      <Label>Start Time</Label>
                       <Input
                         type="time"
-                        className="bg-white dark:bg-neutral-800 text-black dark:text-white"
                         value={formData.start}
                         onChange={(e) =>
                           setFormData({ ...formData, start: e.target.value })
@@ -318,10 +282,9 @@ export default function SchedulePage() {
                     </div>
 
                     <div className="flex-1">
-                      <Label className="dark:text-white">End Time</Label>
+                      <Label>End Time</Label>
                       <Input
                         type="time"
-                        className="bg-white dark:bg-neutral-800 text-black dark:text-white"
                         value={formData.end}
                         onChange={(e) =>
                           setFormData({ ...formData, end: e.target.value })
@@ -330,18 +293,22 @@ export default function SchedulePage() {
                     </div>
                   </div>
 
+                  {/* ROOM */}
                   <div>
-                    <Label className="dark:text-white">Room</Label>
+                    <Label>Room</Label>
                     <Input
                       type="text"
-                      className="bg-white dark:bg-neutral-800 text-black dark:text-white"
-                      value={formData.room}
+                      value={formData.room_number}
                       onChange={(e) =>
-                        setFormData({ ...formData, room: e.target.value })
+                        setFormData({
+                          ...formData,
+                          room_number: e.target.value,
+                        })
                       }
                     />
                   </div>
 
+                  {/* AVAILABLE CHECK */}
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -353,7 +320,7 @@ export default function SchedulePage() {
                         })
                       }
                     />
-                    <span className="dark:text-white">Available</span>
+                    <span>Available</span>
                   </div>
 
                   {editId ? (
@@ -367,7 +334,7 @@ export default function SchedulePage() {
                   )}
                 </div>
 
-                <Dialog.Close className="absolute top-2 right-2 dark:text-white">
+                <Dialog.Close className="absolute top-2 right-2">
                   ✕
                 </Dialog.Close>
               </Dialog.Content>
@@ -375,119 +342,104 @@ export default function SchedulePage() {
           </Dialog.Root>
         </div>
 
-        {/* My Availability */}
+        {/* AVAILABILITY LIST */}
         <Card>
           <CardHeader>
             <CardTitle>My Availability</CardTitle>
-            <CardDescription>
-              Set days and times you are available
-            </CardDescription>
+            <CardDescription>Manage your weekly timings</CardDescription>
           </CardHeader>
-
           <CardContent>
-            {availability.length === 0 ? (
-              <p>No availability set yet.</p>
-            ) : (
-              availability.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between p-2 border rounded mb-2 
-          bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
-                >
-                  {/* LEFT SIDE INFO */}
-                  <div>
-                    <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)}{" "}
-                    - {formatTime(a.end_time)}
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Room: {a.room_number}
-                    </div>
-                  </div>
+            {availability.length === 0 && <p>No availability set.</p>}
 
-                  {/* RIGHT SIDE BUTTONS */}
-                  <div className="flex items-center gap-2">
-                    {/* EDIT BUTTON */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setEditId(a.id);
-                        setFormData({
-                          day: a.day_of_week,
-                          start: a.start_time,
-                          end: a.end_time,
-                          room: a.room_number,
-                          available: a.is_available,
-                        });
-                        setTimeout(() => {
-                          (
-                            document.querySelector(
-                              "[data-edit-dialog-btn]"
-                            ) as HTMLButtonElement
-                          )?.click();
-                        }, 50);
-                      }}
-                    >
-                      ✏️
-                    </Button>
-
-                    {/* DELETE BUTTON */}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(a.id)}
-                    >
-                      🗑️
-                    </Button>
+            {availability.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between p-2 border rounded mb-2"
+              >
+                <div>
+                  <strong>{a.day_of_week}</strong>: {formatTime(a.start_time)} -{" "}
+                  {formatTime(a.end_time)}
+                  <div className="text-sm text-gray-500">
+                    Room: {a.room_number}
                   </div>
                 </div>
-              ))
-            )}
+                
+
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setEditId(a.id);
+                      setFormData({
+                        day: a.day_of_week,
+                        start: a.start_time,
+                        end: a.end_time,
+                        room_number: a.room_number,
+                        available: a.is_available,
+                      });
+                      setTimeout(() => {
+                        (
+                          document.querySelector(
+                            "[data-edit-dialog-btn]"
+                          ) as HTMLElement | null
+                        )?.click();
+                      }, 50);
+                    }}
+                  >
+                    ✏️
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDelete(a.id)}
+                  >
+                    🗑️
+                  </Button>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Weekly Overview */}
+        {/* WEEKLY APPOINTMENTS */}
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Overview</CardTitle>
-            <CardDescription>Your appointments for the week</CardDescription>
+            <CardTitle>Your Appointments</CardTitle>
+            <CardDescription>Upcoming schedule</CardDescription>
           </CardHeader>
           <CardContent>
-            {Object.entries(appointmentsByDate).map(([date, appointments]) => (
+            {Object.entries(appointmentsByDate).map(([date, list]) => (
               <div key={date}>
                 <div className="mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
-                  <h3 className="font-semibold">{date}</h3>
-                  <Badge variant="secondary">
-                    {appointments.length} appointments
-                  </Badge>
+                  <h3 className="font-semibold">
+                    {new Date(date).toLocaleDateString()}
+                  </h3>
+                  <Badge>{list.length} appointments</Badge>
                 </div>
-                <div className="space-y-2 pl-6">
-                  {appointments.map((apt) => (
+
+                <div className="pl-6 space-y-2">
+                  {list.map((apt: any) => (
                     <div
                       key={apt.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
+                      className="flex justify-between border rounded p-3"
                     >
                       <div className="flex items-center gap-3">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <div>
-                          <p className="font-medium">{apt.time}</p>
+                          <p className="font-medium">{apt.time.split("-").map((t: string) => t.slice(0, 5)).join(" - ")}</p>
                           <p className="text-sm text-muted-foreground">
-                            {apt.patientName}
+                            Patient Name: {apt.patientname}
                           </p>
                         </div>
                       </div>
-                      <Badge
-                        variant={
-                          apt.type === "teleconsultation"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {apt.type}
-                      </Badge>
+                      <Badge>{apt.type}</Badge>
                     </div>
                   ))}
                 </div>
+                <br></br>
               </div>
             ))}
           </CardContent>
