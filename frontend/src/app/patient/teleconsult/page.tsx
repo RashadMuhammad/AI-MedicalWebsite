@@ -13,7 +13,6 @@ function PatientNavigation() {
     { href: "/patient/records", icon: FileText, label: "Medical Records" },
     { href: "/patient/billing", icon: CreditCard, label: "Billing" },
     { href: "/patient/teleconsult", icon: Video, label: "Teleconsultation" },
-    { href: "/patient/profile", icon: User, label: "Profile" },
   ]
 
   return (

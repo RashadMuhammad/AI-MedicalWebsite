@@ -95,12 +95,9 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDept, setSelectedDept] = useState<string>("");
-
-  // EDIT state
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editData, setEditData] = useState<Partial<User> | null>(null);
 
-  // Fetch users grouped by role
   const fetchUsersByRole = async (role?: string) => {
     try {
       const query = role ? `?role=${role}` : "";
@@ -129,7 +126,6 @@ export default function UsersPage() {
   const fetchRoles = async () => {
     try {
       const { data } = await apiFetch("/api/roles");
-      console.log("rashadddddd", data);
       setRoles(data);
     } catch (err) {
       console.error("Error fetching roles:", err);
@@ -152,13 +148,10 @@ export default function UsersPage() {
       await fetchRoles();
       await fetchDepartments();
     };
-
     fetchAll();
-
     const intervalId = setInterval(() => {
       fetchAll();
     }, 30000);
-
     return () => clearInterval(intervalId);
   }, [activeTab]);
 
@@ -173,7 +166,7 @@ export default function UsersPage() {
         body: JSON.stringify(formData),
       });
       if (res.status === 201) {
-        toast("New user has been added successfully.");
+        toast.success("New user has been added successfully.");
 
         setSelectedRole("");
         setIsAddUserOpen(false);
@@ -181,13 +174,10 @@ export default function UsersPage() {
         await fetchUsersByRole();
         await fetchCounts();
       } else {
-        setStatus({ type: "error", message: data.error || "Server error" });
+        toast.success(data.error || "Server error");
       }
     } catch (err: any) {
-      setStatus({
-        type: "error",
-        message: err.message || "Something went wrong",
-      });
+      toast.error("Something went wrong");
     } finally {
       setIsSubmitting(false);
     }
@@ -232,7 +222,7 @@ export default function UsersPage() {
         body: JSON.stringify(editData),
       });
       if (res.ok) {
-        toast("User details updated successfully.");
+        toast.success("User details updated successfully.");
         setIsEditOpen(false);
         setEditData(null);
         fetchUsersByRole();
@@ -241,7 +231,7 @@ export default function UsersPage() {
       }
     } catch (err) {
       console.error("Update user error:", err);
-      toast("Could not update user");
+      toast.error("Could not update user");
     } finally {
       setIsSubmitting(false);
     }

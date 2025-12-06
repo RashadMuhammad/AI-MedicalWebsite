@@ -138,7 +138,6 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
-  // ✅ Filter appointments
   const filteredAppointments = appointments.filter((apt) => {
     const status = apt.status.toLowerCase();
     if (filterStatus !== "all" && status !== filterStatus) return false;
