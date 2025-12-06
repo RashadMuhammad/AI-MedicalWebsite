@@ -7,9 +7,10 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { useRouter } from "next/navigation"; // ✅ missing import
+import { useRouter } from "next/navigation";
 import type { User, UserRole } from "./types";
 import { apiFetch } from "./api";
+import { toast } from "react-toastify";
 
 interface AuthContextType {
   user: User | null;
@@ -103,9 +104,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout
   const logout = async () => {
     try {
-      await apiFetch("/api/logout", { method: "POST", credentials: "include" });
+      const sessionId = localStorage.getItem("sessionId");
+
+      const { res, data } = await apiFetch("/api/users/logout", {
+        method: "POST",
+        body: JSON.stringify({ sessionId }),
+      });
+
+      if (!res.ok) {
+        toast.error(data?.error || "Logout failed");
+        return;
+      }
+
+      toast.success("Logged out successfully");
     } catch (err) {
-      console.error(err);
+      toast.error("Logout error");
+      console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("sessionId");
       setUser(null);

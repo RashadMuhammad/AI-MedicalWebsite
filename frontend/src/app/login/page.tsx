@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { toast } from "react-toastify";
 import { Loader2, Moon, Sun } from "lucide-react";
-import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import GuestRoute from "@/components/auth/GuestRoute";
 

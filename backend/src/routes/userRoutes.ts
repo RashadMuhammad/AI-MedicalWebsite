@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser, loginUser, getCountByRole,getAllUsers,getUsersByRole,getAllDoctor,updateUser } from "../controllers/userController";
+import { createUser, loginUser, getCountByRole,getAllUsers,getUsersByRole,getAllDoctor,updateUser, logoutUser } from "../controllers/userController";
 import { verifySession } from "../middleware/authMiddleware";
 import { upload } from "./upload";
 const app = express();
@@ -17,5 +17,7 @@ router.get("/alluser",verifySession,getAllUsers );
 router.get("/by-role",verifySession,getUsersByRole);
 router.get("/doctors",verifySession,getAllDoctor);
 router.put("/:id", verifySession, upload.single("avatar"), updateUser);
+
+router.post("/logout",logoutUser)
 
 export default router;

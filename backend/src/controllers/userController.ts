@@ -2,8 +2,6 @@ import type { Request, Response } from "express";
 import { pool } from "../config/db";
 import bcrypt from "bcryptjs";
 import { generateAccessToken, generateRefreshToken } from "../utils/tokenUtils";
-import crypto from "crypto";
-import { error } from "console";
 
 export const createUser = async (
   req: Request,
@@ -55,7 +53,6 @@ export const createUser = async (
     const role_id = Number(roleResult.rows[0].role_id);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ Use correct column name: department_id
     const result = await pool.query(
       `INSERT INTO users 
         (email, password, name, role_id, phone, avatar, specialization, department_id, date_of_birth, blood_group, address, emergency_contact, created_at, updated_at)
@@ -172,7 +169,6 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-// GET /api/users/count-by-role
 export const getCountByRole = async (req: Request, res: Response) => {
   try {
     const query = `
@@ -245,6 +241,7 @@ export const getUsersByRole = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 export const getAllDoctor = async (req: Request, res: Response) => {
   try {
     const result = await pool.query(
@@ -257,7 +254,6 @@ export const getAllDoctor = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Update user (PUT /api/users/:id)
 export const updateUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -364,3 +360,22 @@ export const updateUser = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+export const logoutUser = async (req:Request, res:Response) => {
+    try {
+    const sessionId = req.body.sessionId || req.query.sessionId;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: "Session ID required" });
+    }
+
+    await pool.query("DELETE FROM sessions WHERE session_id = $1", [
+      sessionId,
+    ]);
+
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ error: "Server error during logout" });
+  }
+}
