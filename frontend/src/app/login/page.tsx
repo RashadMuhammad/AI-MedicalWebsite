@@ -55,11 +55,10 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      toast("Login successful!");
+      const user = await login(email, password); 
+      toast.success("Login successful!"); 
     } catch (err: any) {
-      console.error("Login failed:", err);
-      toast(err?.message || "Invalid credentials");
+      toast.error(err?.message || "Invalid credentials");
     } finally {
       setIsLoading(false);
     }

@@ -13,7 +13,7 @@ import { apiFetch } from "./api";
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void; // add this
   isLoading: boolean;
@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadSession = async () => {
       try {
         const sessionId = localStorage.getItem("sessionId");
-        console.log("secction",sessionId);
         if (!sessionId) {
           setIsLoading(false);
           return;
@@ -43,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           method: "GET",
           credentials: "include",
         });
-        console.log("sdbjhghkehd",data.user);
 
         if (res.ok) {
           setUser(data.user || data);
@@ -74,8 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Login
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
+
     try {
       const { res, data } = await apiFetch("/api/users/login", {
         method: "POST",
@@ -87,15 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.sessionId) {
         localStorage.setItem("sessionId", data.sessionId);
       }
-      console.log("sndjkjd",data.user);
 
-      const normalizedUser = {
+      const normalizedUser: User = {
         ...data.user,
         role_name: data.user.role || data.user.role_name,
       };
 
       setUser(normalizedUser);
-      router.push(`/${normalizedUser.role_name}`);
+
+      return normalizedUser;
     } finally {
       setIsLoading(false);
     }
@@ -113,12 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-return (
-  <AuthContext.Provider value={{ user, setUser, login, logout, isLoading, roles }}>
-    {!isLoading && children}
-  </AuthContext.Provider>
-);
-
+  return (
+    <AuthContext.Provider
+      value={{ user, setUser, login, logout, isLoading, roles }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
