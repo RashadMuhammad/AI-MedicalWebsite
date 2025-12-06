@@ -272,6 +272,9 @@ ORDER BY u.name;
 
 export const getPatientMedicalRecords = async (req: Request, res: Response) => {
   const patientId = req.query.patientId as string | undefined;
+  const doctorId = req.user?.user_id;
+
+  console.log(doctorId,"docttttttttttttttttt")
 
   try {
     let query = `
@@ -284,14 +287,14 @@ export const getPatientMedicalRecords = async (req: Request, res: Response) => {
           a.created_at
       FROM appointments a
       JOIN users u ON a.patient_id = u.id
-      WHERE 1=1
+      WHERE a.doctor_id = $1
     `;
 
-    const params: any[] = [];
+    const params: any[] = [doctorId];
 
     // Filter by patient
     if (patientId) {
-      query += ` AND a.patient_id = $1`;
+      query += ` AND a.patient_id = $2`;
       params.push(patientId);
     }
 
