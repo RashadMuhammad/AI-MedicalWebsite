@@ -63,10 +63,9 @@ export default function DoctorAppointmentsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const userId = user?.user_id ?? user?.id;
 
   useEffect(() => {
-    const userId = user?.user_id ?? user?.id;
-
     if (!userId) {
       setLoading(false);
       return;
@@ -97,7 +96,7 @@ export default function DoctorAppointmentsPage() {
     };
 
     fetchAppointments();
-  }, [user?.id]);
+  }, [userId]);
 
   const handleStatusChange = async (
     appointmentId: string,
@@ -121,7 +120,7 @@ export default function DoctorAppointmentsPage() {
 
       if (res.ok) {
         const updatedStatus = data?.status || data?.data?.status || newStatus;
-        toast(`Appointment marked as ${updatedStatus}.`);
+        toast.success(`Appointment marked as ${updatedStatus}.`);
 
         setAppointments((prev) =>
           prev.map((apt) =>
@@ -131,11 +130,11 @@ export default function DoctorAppointmentsPage() {
           )
         );
       } else {
-        toast(data?.error || "Failed to update status.");
+        toast.error(data?.error || "Failed to update status.");
       }
     } catch (error) {
       console.error("Status change error:", error);
-      toast("Something went wrong while updating status.");
+      toast.error("Something went wrong while updating status.");
     }
   };
 
