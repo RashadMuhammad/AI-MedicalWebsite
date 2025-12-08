@@ -34,61 +34,79 @@ export const addService = async (req: Request, res: Response) => {
   try {
     const {
       name,
-      head_id,
-      doctors_count,
-      patients_count,
-      revenue,
-      growth_percent,
+      category,
+      department_id,
+      price,
+      price_type,
+      duration_value,
+      duration_unit,
+      taxable,
+      tax_rate,
+      eligible_for_insurance,
+      insurance_codes,
       status,
+      doctor_pricing // array of { doctor_id, price } if price_type is DoctorBased
     } = req.body;
 
-    console.log("Incoming request body:", req.body);
+    // Safe defaults
+    const safeCategory = category || "Consultation";
+    const safeDepartmentId = department_id || null;
+    const safePrice = price ?? 0;
+    const safePriceType = price_type || "Fixed";
+    const safeDurationValue = duration_value ?? 0;
+    const safeDurationUnit = duration_unit || "Minutes";
+    const safeTaxable = taxable ?? false;
+    const safeTaxRate = tax_rate ?? 0;
+    const safeEligibleForInsurance = eligible_for_insurance ?? false;
+    const safeInsuranceCodes = insurance_codes || [];
+    const safeStatus = status || "Active";
 
-    // Ensure all optional fields have safe default values
-    const safeHeadId = head_id || null;                 // UUID column can be null
-    const safeDoctorsCount = doctors_count ?? 0;
-    const safePatientsCount = patients_count ?? 0;
-    const safeRevenue = revenue ?? 0;
-    const safeGrowthPercent = growth_percent ?? 0;
-    const safeStatus = status || "active";
-
-    console.log("Safe values to insert:");
-    console.log({
-      name,
-      head_id: safeHeadId,
-      doctors_count: safeDoctorsCount,
-      patients_count: safePatientsCount,
-      revenue: safeRevenue,
-      growth_percent: safeGrowthPercent,
-      status: safeStatus,
-    });
-
+    // Insert into services table
     const result = await pool.query(
-      `INSERT INTO departments
-        (name, head_id, doctors_count, patients_count, revenue, growth_percent, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO services
+        (name, category, department_id, price, price_type, duration_value, duration_unit, taxable, tax_rate, eligible_for_insurance, insurance_codes, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        RETURNING *`,
       [
         name,
-        safeHeadId,
-        safeDoctorsCount,
-        safePatientsCount,
-        safeRevenue,
-        safeGrowthPercent,
-        safeStatus,
+        safeCategory,
+        safeDepartmentId,
+        safePrice,
+        safePriceType,
+        safeDurationValue,
+        safeDurationUnit,
+        safeTaxable,
+        safeTaxRate,
+        safeEligibleForInsurance,
+        safeInsuranceCodes,
+        safeStatus
       ]
     );
 
+    const newService = result.rows[0];
+
+    // If DoctorBased pricing, insert into service_doctor_pricing
+    if (safePriceType === "DoctorBased" && Array.isArray(doctor_pricing)) {
+      for (const dp of doctor_pricing) {
+        await pool.query(
+          `INSERT INTO service_doctor_pricing (service_id, doctor_id, price)
+           VALUES ($1,$2,$3)`,
+          [newService.service_id, dp.doctor_id, dp.price]
+        );
+      }
+    }
+
     res.status(201).json({
-      message: "✅ Department created successfully",
-      department: result.rows[0], // return inserted department
+      message: "✅ Service created successfully",
+      service: newService
     });
 
   } catch (err) {
-    console.error("Error adding department:", err);
-    res.status(500).json({ error: "Failed to add department" });
+    console.error("Error adding service:", err);
+    res.status(500).json({ error: "Failed to add service" });
   }
 };
+
   
 // ✅ Update department
 export const updateService = async (req: Request, res: Response) => {

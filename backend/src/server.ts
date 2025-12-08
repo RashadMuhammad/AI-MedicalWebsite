@@ -10,6 +10,7 @@ import appointmentsRoutes from "./routes/appointmentsRoutes"
 import sessionRoutes from "./routes/sessionRoutes"
 import serviceRoutes from "./routes/serviceRoutes";
 import { verifySession } from "./middleware/authMiddleware";
+import commonRoutes from "./routes/commonRoutes";
 
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use("/api/departments",verifySession, departmentRoutes);
 app.use("/api/doctor",verifySession,doctorRoutes);
 app.use("/api/appointments",verifySession, appointmentsRoutes);
 app.use("/api/services",verifySession, serviceRoutes );
+app.use("/api/doctors",verifySession, commonRoutes );
 
 // Start server
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

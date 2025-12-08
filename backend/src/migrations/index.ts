@@ -7,6 +7,7 @@ import { addForeignKeyToUsers } from "./005_add_fk";
 import { createAppointmentsTable } from "./006_create_appointments";
 import { createSessionsTable } from "./007_create_session_id";
 import { createServicesTable } from "./008_create_services";
+import { CreateDoctorServiceTable } from "./008_create_services";
 async function runMigrations() {
     try {
         console.log("🚀 Starting migrations...");
@@ -19,6 +20,7 @@ async function runMigrations() {
         await addForeignKeyToUsers(); 
         await createAppointmentsTable(); 
         await createServicesTable();  // 7️⃣ sessions last
+        await CreateDoctorServiceTable();
 
         console.log("✅ All migrations completed successfully");
         process.exit(0);
