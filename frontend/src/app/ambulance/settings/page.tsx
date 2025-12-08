@@ -22,7 +22,7 @@ export default function AmbulanceSettings() {
   //   return null
   // }
 
-  const ambulance = mockAmbulances.find((a) => a.driverId === user.id)
+  const ambulance = mockAmbulances.find((a) => a.driverId === user?.id)
 
   return (
     <DashboardLayout navigation={<Navigation />}>

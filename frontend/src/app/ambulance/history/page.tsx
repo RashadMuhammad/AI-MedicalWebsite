@@ -18,7 +18,7 @@ export default function TripHistory() {
   //   return null
   // }
 
-  const trips = mockAmbulanceTrips.filter((t) => t.driverId === user.id)
+  const trips = mockAmbulanceTrips.filter((t) => t.driverId === user?.id)
   const totalDistance = trips.reduce((sum, t) => sum + t.distance, 0).toFixed(1)
   const totalEarnings = trips.reduce((sum, t) => sum + t.fare, 0).toFixed(2)
 
