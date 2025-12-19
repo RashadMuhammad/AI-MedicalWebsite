@@ -20,7 +20,6 @@ import { useAuth } from "@/lib/auth-context";
 import { apiFetch } from "@/lib/api";
 import { toast } from "react-toastify";
 
-// ------------------ NAVIGATION ------------------
 function DoctorNavigation() {
   const navItems = [
     { href: "/doctor", icon: Activity, label: "Dashboard" },
@@ -45,7 +44,6 @@ function DoctorNavigation() {
   );
 }
 
-// ------------------ MAIN COMPONENT ------------------
 export default function SchedulePage() {
   const { user, isLoading: userLoading } = useAuth();
 
@@ -63,9 +61,7 @@ export default function SchedulePage() {
 
   const [editId, setEditId] = useState<number | null>(null);
 
-  // ------------------ FETCH DATA ------------------
   useEffect(() => {
-    // Only run when user is loaded
     if (userLoading) return;
 
     const userId = user?.user_id ?? user?.id;
@@ -84,7 +80,7 @@ export default function SchedulePage() {
       try {
         setLoading(true);
 
-        const availRes = await apiFetch(`/api/doctor/${userId}`);
+        const availRes = await apiFetch("/api/availability");
         if (availRes.data?.success) {
           setAvailability(availRes.data.data || []);
         }
@@ -119,19 +115,18 @@ export default function SchedulePage() {
         room_number: formData.room_number,
       };
 
-      // ---- CHECK CONFLICT ----
       if (hasConflict(newSlot, availability)) {
         toast.error("This time slot conflicts with an existing schedule.");
         return;
       }
 
       const payload = {
-        doctor_id: user?.user_id,
+        user_id: user?.user_id ?? user?.id,
         ...newSlot,
         is_available: formData.available,
       };
 
-      const response = await apiFetch("/api/doctor", {
+      const response = await apiFetch("/api/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -163,7 +158,7 @@ export default function SchedulePage() {
         return;
       }
 
-      const response = await apiFetch(`/api/doctor/${editId}`, {
+      const response = await apiFetch(`/api/availability/${editId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -176,7 +171,7 @@ export default function SchedulePage() {
         setAvailability((prev) =>
           prev.map((a) => (a.id === editId ? response.data.data : a))
         );
-        toast.success("Updated");
+        toast.success("Availability Updated");
 
         setEditId(null);
 
@@ -193,13 +188,13 @@ export default function SchedulePage() {
   // ------------ DELETE AVAILABILITY ------------
   const handleDelete = async (id: number) => {
     try {
-      const response = await apiFetch(`/api/doctor/${id}`, {
+      const response = await apiFetch(`/api/availability/${id}`, {
         method: "DELETE",
       });
 
       if (response.data?.success) {
         setAvailability((prev) => prev.filter((a) => a.id !== id));
-        toast.success("Deleted");
+        toast.success("Availability Deleted");
       }
     } catch {
       toast.error("Delete failed");

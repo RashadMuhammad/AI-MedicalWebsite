@@ -45,7 +45,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (res.ok) {
-          setUser(data.user || data);
+          const rawUser = data.user || data;
+
+          const normalizedUser: User = {
+            ...rawUser,
+            id: rawUser.id || rawUser.user_id,
+            role_name: rawUser.role || rawUser.role_name,
+          };
+
+          setUser(normalizedUser);
         } else {
           setUser(null);
         }
@@ -90,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const normalizedUser: User = {
         ...data.user,
+        roleId: data.user.role_id,
         role_name: data.user.role || data.user.role_name,
       };
 

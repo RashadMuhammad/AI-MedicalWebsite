@@ -106,10 +106,13 @@ export const loginUser = async (req: Request, res: Response) => {
 
   try {
     const userResult = await pool.query(
-      `SELECT u.*, r.role_name 
-       FROM users u 
-       JOIN user_roles r ON u.role_id = r.role_id
-       WHERE email = $1`,
+      `SELECT 
+      u.*,
+      r.role_id,
+      r.role_name
+      FROM users u
+      JOIN user_roles r ON u.role_id = r.role_id
+      WHERE email = $1`,
       [email]
     );
 
@@ -146,10 +149,14 @@ export const loginUser = async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        role_id: user.role_id, 
+        role_name: user.role_name, 
         role: user.role_name,
         phone: user.phone,
         avatar: user.avatar
-          ? `data:image/jpeg;base64,${Buffer.from(user.avatar).toString("base64")}`
+          ? `data:image/jpeg;base64,${Buffer.from(user.avatar).toString(
+              "base64"
+            )}`
           : null, // ✅ corrected
         specialization: user.specialization,
         department_id: user.department_id,
@@ -162,7 +169,6 @@ export const loginUser = async (req: Request, res: Response) => {
       refreshToken,
       sessionId,
     });
-
   } catch (err) {
     console.error("Login error:", err);
     return res.status(500).json({ error: "Server error" });
@@ -267,7 +273,7 @@ export const updateUser = async (req: Request, res: Response) => {
     dateOfBirth,
     blood_group,
     address,
-    emergency_contact
+    emergency_contact,
   } = req.body;
 
   console.log("Request body:", req.body);
@@ -308,7 +314,7 @@ export const updateUser = async (req: Request, res: Response) => {
         address || null,
         emergency_contact || null,
         avatar,
-        id
+        id,
       ]
     );
 
@@ -322,13 +328,12 @@ export const updateUser = async (req: Request, res: Response) => {
     // 🔥 FIXED: Fetch user role
     // -------------------------------
     const roleResult = await pool.query(
-  `SELECT r.role_name
+      `SELECT r.role_name
    FROM users u
    JOIN user_roles r ON u.role_id = r.role_id
    WHERE u.id = $1`,
-  [id]
-);
-
+      [id]
+    );
 
     const roleName =
       roleResult.rows.length > 0 ? roleResult.rows[0].role_name : "Unknown";
@@ -345,7 +350,9 @@ export const updateUser = async (req: Request, res: Response) => {
         role_name: roleName,
         phone: updatedUser.phone,
         avatar: updatedUser.avatar
-          ? `data:image/jpeg;base64,${Buffer.from(updatedUser.avatar).toString("base64")}`
+          ? `data:image/jpeg;base64,${Buffer.from(updatedUser.avatar).toString(
+              "base64"
+            )}`
           : null,
         specialization: updatedUser.specialization,
         department_id: updatedUser.department_id,
@@ -361,21 +368,19 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 };
 
-export const logoutUser = async (req:Request, res:Response) => {
-    try {
+export const logoutUser = async (req: Request, res: Response) => {
+  try {
     const sessionId = req.body.sessionId || req.query.sessionId;
 
     if (!sessionId) {
       return res.status(400).json({ error: "Session ID required" });
     }
 
-    await pool.query("DELETE FROM sessions WHERE session_id = $1", [
-      sessionId,
-    ]);
+    await pool.query("DELETE FROM sessions WHERE session_id = $1", [sessionId]);
 
     return res.status(200).json({ message: "Logged out successfully" });
   } catch (err) {
     console.error("Logout error:", err);
     return res.status(500).json({ error: "Server error during logout" });
   }
-}
+};

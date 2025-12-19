@@ -10,7 +10,6 @@ export const getServices = async (req: Request, res: Response) => {
     
     console.log("Fetched services:", result.rows);
     return res.json(result.rows);
-    console.log("Fetched services:", result.rows);
   } catch (err) {
     console.error("Error fetching services:", err);
     return res.status(500).json({ error: "Failed to fetch services" });
@@ -21,7 +20,7 @@ export const getServices = async (req: Request, res: Response) => {
 export const getServicesById = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {
-    const result = await pool.query("SELECT * FROM servicess WHERE department_id = $1", [id]);
+    const result = await pool.query("SELECT * FROM services WHERE department_id = $1", [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: "Department not found" });
     res.json(result.rows[0]);
   } catch (err) {

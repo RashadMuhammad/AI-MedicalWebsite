@@ -92,3 +92,42 @@ $$;
 console.log("✅ avatar column ensured as BYTEA");
 
 };
+
+
+// INSERT INTO public.users (
+//     id,
+//     email,
+//     password,
+//     name,
+//     role_id,
+//     phone,
+//     avatar,
+//     specialization,
+//     date_of_birth,
+//     blood_group,
+//     address,
+//     emergency_contact,
+//     created_at,
+//     updated_at,
+//     refresh_token,
+//     department_id,
+//     is_active
+// ) VALUES (
+//     gen_random_uuid(),
+//     'admin@google.com',
+//     '$2b$10$liZhe78mM9oa.V/pPKNICeGs64SlpWlmwJeCqFnwZ7FmRL.NQRkC.', -- bcrypt hash of '123'
+//     'Super Admin',
+//     2,
+//     '9876543210',
+//     NULL,
+//     'Administration',
+//     '1985-01-01',
+//     'O+',
+//     '123 Street, City, Country',
+//     '9876543211',
+//     CURRENT_TIMESTAMP,
+//     CURRENT_TIMESTAMP,
+//     NULL,
+//     0,
+//     TRUE
+// );

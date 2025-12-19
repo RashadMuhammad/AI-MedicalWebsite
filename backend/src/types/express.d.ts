@@ -5,6 +5,7 @@ declare module "express-serve-static-core" {
     user?: {
       session_id: string;
       user_id: string; 
+      role_id: string,
       department_id?: string;
       id?: string;
       name?: string;

@@ -38,7 +38,7 @@ function PatientNavigation() {
     { href: "/patient/billing", icon: Calendar, label: "Billing" },
     { href: "/patient/teleconsult", icon: Video, label: "Teleconsultation" },
   ];
-  
+
   return (
     <>
       {navItems.map((item) => (
@@ -83,11 +83,21 @@ export default function AppointmentsPage() {
 
   // Fetch patient appointments (session-based)
   useEffect(() => {
+    console.log("jherbtgjhbwrjbtguiewbrtguibhwrytgbhuywerbg3hgyuwrghuyghb");
+    
+    console.log(user?.id);
     if (!user?.id) return;
+
+    
+    console.log("fghjdfh");
+    
 
     const fetchAppointments = async () => {
       try {
         const { data } = await apiFetch("/api/appointments");
+
+        console.log("HErrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr,",data);
+        
 
         if (data.success) {
           const allAppointments = data.data;
@@ -118,7 +128,6 @@ export default function AppointmentsPage() {
     fetchDoctors();
   }, []);
 
-  // Fetch available time slots
   useEffect(() => {
     const fetchTimes = async () => {
       if (!formData.doctor) {
@@ -129,7 +138,10 @@ export default function AppointmentsPage() {
       try {
         const { data } = await apiFetch(`/api/doctor/${formData.doctor}`);
 
-        console.log("koooooooooooooooooooooooooooooooooooooooooooooooooooooooooiiiiiiiiiii",data)
+        console.log(
+          "koooooooooooooooooooooooooooooooooooooooooooooooooooooooooiiiiiiiiiii",
+          data
+        );
 
         if (data.success && data.data.length > 0) {
           let filtered = data.data.filter((t: any) => t.is_available);
@@ -165,7 +177,7 @@ export default function AppointmentsPage() {
   const handleBookAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const sessionId = localStorage.getItem("sessionId"); 
+    const sessionId = localStorage.getItem("sessionId");
 
     if (!sessionId) {
       toast({
@@ -193,7 +205,6 @@ export default function AppointmentsPage() {
     try {
       const payload = {
         doctor_id: formData.doctor,
-        patient_id: user?.id,
         appointment_date: formData.date,
         start_time: formData.time.split("-")[0],
         end_time: formData.time.split("-")[1],
@@ -201,8 +212,7 @@ export default function AppointmentsPage() {
         reason: formData.reason,
       };
 
-      console.log("payload -> ",payload);
-      
+      console.log("payload -> ", payload);
 
       const { res, data } = await apiFetch("/api/appointments", {
         method: "POST",
@@ -244,7 +254,10 @@ export default function AppointmentsPage() {
         );
 
   return (
-    <DashboardLayout navigation={<PatientNavigation />} allowedRoles={["patient"]}>
+    <DashboardLayout
+      navigation={<PatientNavigation />}
+      allowedRoles={["patient"]}
+    >
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -284,8 +297,8 @@ export default function AppointmentsPage() {
                     <SelectContent>
                       {doctors.map((doc) => (
                         <SelectItem
-                          key={doc.doctor_id}
-                          value={String(doc.doctor_id)}
+                          key={doc.user_id}
+                          value={String(doc.user_id)}
                         >
                           {doc.doctor_name} - {doc.department_name}
                         </SelectItem>

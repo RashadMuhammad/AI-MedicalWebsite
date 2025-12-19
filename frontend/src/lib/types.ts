@@ -5,6 +5,7 @@ export type UserRole = "patient" | "doctor" | "admin1"
 export interface User {
   id: string
   user_id?: string
+  role_id?: string
   email: string
   password?: string 
   name: string

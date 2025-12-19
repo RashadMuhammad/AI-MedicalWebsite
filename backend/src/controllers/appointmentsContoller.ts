@@ -4,8 +4,13 @@ import { pool } from "../config/db";
 // 📅 Create a new appointment
 export const createAppointment = async (req: Request, res: Response) => {
   try {
+    const patient_id = req.user?.user_id;
+
+    if (!patient_id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const {
-      patient_id,
       doctor_id,
       appointment_date,
       start_time,
@@ -42,11 +47,11 @@ export const createAppointment = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const getAppointments = async (req: Request, res: Response) => {
   try {
     const { doctor_id, patient_id } = req.query;
+
+    console.log("reached...........")
 
     // Base query
     let query = `
@@ -81,7 +86,7 @@ export const getAppointments = async (req: Request, res: Response) => {
     query += " ORDER BY a.appointment_date DESC";
 
     const result = await pool.query(query, params);
-   res.json({ success: true, data: result.rows });
+    res.json({ success: true, data: result.rows });
   } catch (err) {
     console.error("❌ Error fetching appointments:", err);
     res.status(500).json({ error: "Internal Server Error" });
@@ -131,7 +136,15 @@ export const updateAppointment = async (req: Request, res: Response) => {
          updated_at = CURRENT_TIMESTAMP
        WHERE appointment_id = $7
        RETURNING *`,
-      [appointment_date, start_time, end_time, appointment_type, reason, status, id]
+      [
+        appointment_date,
+        start_time,
+        end_time,
+        appointment_type,
+        reason,
+        status,
+        id,
+      ]
     );
 
     if (result.rowCount === 0)
@@ -173,7 +186,7 @@ export const getDoctorAppointments = async (req: Request, res: Response) => {
     let { doctorId } = req.params;
     doctorId = doctorId.trim();
 
-    console.log("doctorId",doctorId)
+    console.log("doctorId", doctorId);
 
     const result = await pool.query(
       `SELECT 
@@ -203,29 +216,34 @@ export const getDoctorAppointments = async (req: Request, res: Response) => {
 // ✅ Update Appointment Status
 export const updateAppointmentStatus = async (req: Request, res: Response) => {
   try {
-    const { appointmentId } = req.params
-    const { status } = req.body
+    const { appointmentId } = req.params;
+    const { status } = req.body;
 
-    const validStatuses = ["scheduled", "in-progress", "completed", "cancelled"]
+    const validStatuses = [
+      "scheduled",
+      "in-progress",
+      "completed",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" })
+      return res.status(400).json({ message: "Invalid status value" });
     }
 
     const result = await pool.query(
       `UPDATE appointments SET status = $1 WHERE appointment_id = $2 RETURNING *`,
       [status, appointmentId]
-    )
+    );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({ message: "Appointment not found" })
+      return res.status(404).json({ message: "Appointment not found" });
     }
 
     res.json({
       message: "Appointment status updated successfully",
       appointment: result.rows[0],
-    })
+    });
   } catch (error) {
-    console.error("Error updating status:", error)
-    res.status(500).json({ message: "Internal server error" })
+    console.error("Error updating status:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};

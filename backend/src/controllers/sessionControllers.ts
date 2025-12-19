@@ -22,6 +22,7 @@ export const getSessionInfo = async (req: Request, res: Response) => {
         u.blood_group,
         u.address,
         u.emergency_contact,
+        r.role_id,
         r.role_name
       FROM sessions s
       JOIN users u ON s.user_id = u.id
@@ -45,6 +46,7 @@ export const getSessionInfo = async (req: Request, res: Response) => {
     req.user = {
       session_id: user.session_id,
       user_id: user.user_id,
+      role_id: user.role_id,
       name: user.name,
       email: user.email,
       role_name: user.role_name,

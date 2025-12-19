@@ -2,7 +2,7 @@ import { pool } from "../config/db";
 import { createUsersRolesTable } from "./001_create_user_roles";
 import { createUsersTable } from "./002_create_users";
 import { createDepartmentsTable } from './003_create_departments'
-import { createDoctorAvailabilityTable } from "./004_create_doctor_availability";
+import { createAvailabilityTable } from "./004_create_availability";
 import { addForeignKeyToUsers } from "./005_add_fk";
 import { createAppointmentsTable } from "./006_create_appointments";
 import { createSessionsTable } from "./007_create_session_id";
@@ -16,7 +16,7 @@ async function runMigrations() {
         await createDepartmentsTable();         // 2️⃣ departments first
         await createUsersTable();               // 3️⃣ users next (can reference departments)
         await createSessionsTable();
-        await createDoctorAvailabilityTable();  // 4️⃣ doctor availability
+        await createAvailabilityTable();  // 4️⃣ doctor availability
         await addForeignKeyToUsers(); 
         await createAppointmentsTable(); 
         await createServicesTable();  // 7️⃣ sessions last

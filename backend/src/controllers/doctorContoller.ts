@@ -2,43 +2,44 @@ import { Request, Response } from "express";
 import { pool } from "../config/db";
 
 // Create new availability
-export const createAvailability = async (req: Request, res: Response) => {
-  const data = req.body;
+// export const createAvailability = async (req: Request, res: Response) => {
+//   const data = req.body;
 
-  if (
-    !data.doctor_id ||
-    !data.day_of_week ||
-    !data.start_time ||
-    !data.end_time
-  ) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Missing required fields" });
-  }
+//   if (
+//     !data.doctor_id ||
+//     !data.day_of_week ||
+//     !data.start_time ||
+//     !data.end_time
+//   ) {
+//     return res
+//       .status(400)
+//       .json({ success: false, error: "Missing required fields" });
+//   }
 
-  try {
-    const result = await pool.query(
-      `INSERT INTO doctor_availability
-        (doctor_id, day_of_week, start_time, end_time, room_number, is_available)
-       VALUES ($1,$2,$3,$4,$5,$6)
-       RETURNING *`,
-      [
-        data.doctor_id,
-        data.day_of_week,
-        data.start_time,
-        data.end_time,
-        data.room_number || null,
-        data.is_available ?? true,
-      ]
-    );
+//   try {
+//     const result = await pool.query(
+//       `INSERT INTO doctor_availability
+//         (doctor_id,role_id, day_of_week, start_time, end_time, room_number, is_available)
+//        VALUES ($1,$2,$3,$4,$5,$6)
+//        RETURNING *`,
+//       [
+//         data.doctor_id,
+//         data.role_id,
+//         data.day_of_week,
+//         data.start_time,
+//         data.end_time,
+//         data.room_number || null,
+//         data.is_available ?? true,
+//       ]
+//     );
 
-    res.status(201).json({ success: true, data: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: "Database error" });
-  }
-};
-// Get all availability for a doctor
+//     res.status(201).json({ success: true, data: result.rows[0] });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, error: "Database error" });
+//   }
+// };
+// // Get all availability for a doctor
 export const getDoctorAvailability = async (req: Request, res: Response) => {
   let doctor_id = req.params.doctor_id?.trim();
 
@@ -52,14 +53,14 @@ export const getDoctorAvailability = async (req: Request, res: Response) => {
     const result = await pool.query(
       `SELECT 
         id,
-        doctor_id,
+        user_id,
         day_of_week,
         start_time,
         end_time,
         room_number,
         is_available
-      FROM doctor_availability
-      WHERE doctor_id = $1
+      FROM availability
+      WHERE user_id = $1
       ORDER BY 
         CASE
           WHEN day_of_week = 'Monday' THEN 1
@@ -88,7 +89,7 @@ export const getDoctorsWithDepartments = async (
   try {
     const result = await pool.query(`
       SELECT 
-        u.id AS doctor_id,
+        u.id AS user_id,
         u.name AS doctor_name,
         d.name AS department_name
       FROM users u
@@ -120,13 +121,13 @@ export const getAllDoctorAvailability = async (req: Request, res: Response) => {
     const query = `
       SELECT 
         id,
-        doctor_id,
+        user_id,
         day_of_week,
         start_time,
         end_time,
         room_number,
         is_available
-      FROM doctor_availability
+      FROM availability
       ORDER BY 
         CASE
           WHEN day_of_week = 'Monday' THEN 1
@@ -157,7 +158,7 @@ export const updateAvailability = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      `UPDATE doctor_availability
+      `UPDATE availability
        SET day_of_week=$1,
            start_time=$2,
            end_time=$3,
@@ -191,7 +192,7 @@ export const deleteAvailability = async (req: Request, res: Response) => {
   console.log("deleting id......................", id);
   try {
     const result = await pool.query(
-      `DELETE FROM doctor_availability WHERE id=$1 RETURNING *`,
+      `DELETE FROM availability WHERE id=$1 RETURNING *`,
       [id]
     );
 
@@ -274,7 +275,7 @@ export const getPatientMedicalRecords = async (req: Request, res: Response) => {
   const patientId = req.query.patientId as string | undefined;
   const doctorId = req.user?.user_id;
 
-  console.log(doctorId,"docttttttttttttttttt")
+  console.log(doctorId, "docttttttttttttttttt");
 
   try {
     let query = `
@@ -325,14 +326,7 @@ export const createMedicalRecord = async (req: Request, res: Response) => {
         (patient_id, doctor_id, appointment_date, diagnosis, symptoms, prescription, notes)
        VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6)
        RETURNING *`,
-      [
-        patientId,
-        req.user?.user_id,
-        diagnosis,
-        symptoms,
-        prescription,
-        notes,
-      ]
+      [patientId, req.user?.user_id, diagnosis, symptoms, prescription, notes]
     );
 
     return res.json({ success: true, data: result.rows[0] });
