@@ -1,22 +1,39 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/lib/auth-context"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Activity, Heart, Thermometer, Users, Clock, AlertCircle, CheckCircle2, Stethoscope } from "lucide-react"
-import Link from "next/link"
-import { mockNursingTasks, mockPatientVitals } from "@/lib/mock-data"
+import { useAuth } from "@/lib/auth-context";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Activity,
+  Heart,
+  Thermometer,
+  Users,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Stethoscope,
+  AlertTriangle
+} from "lucide-react";
+import Link from "next/link";
+import { mockNursingTasks, mockPatientVitals } from "@/lib/mock-data";
 
 function NurseNavigation() {
   const navItems = [
     { href: "/nurse", icon: Activity, label: "Dashboard" },
-    { href: "/nurse/tasks", icon: Clock, label: "Tasks" },
+    { href: "/nurse/tasks", icon: AlertTriangle, label: "Tasks" },
     { href: "/nurse/vitals", icon: Heart, label: "Patient Vitals" },
     { href: "/nurse/patients", icon: Users, label: "Assigned Patients" },
     { href: "/nurse/records", icon: Stethoscope, label: "Medical Records" },
-  ]
+    { href: "/nurse/schedule", icon: Clock, label: "Schedule" },
+  ];
 
   return (
     <>
@@ -29,39 +46,55 @@ function NurseNavigation() {
         </Link>
       ))}
     </>
-  )
+  );
 }
 
 export default function NurseDashboard() {
-  const { user } = useAuth()
+  const { user } = useAuth();
 
   // Filter tasks for current nurse
-  const nurseTasks = mockNursingTasks.filter((task) => task.assignedTo === user?.id || task.assignedTo === "n1")
-  const pendingTasks = nurseTasks.filter((task) => task.status === "pending")
-  const inProgressTasks = nurseTasks.filter((task) => task.status === "in-progress")
-  const completedTasks = nurseTasks.filter((task) => task.status === "completed")
+  const nurseTasks = mockNursingTasks.filter(
+    (task) => task.assignedTo === user?.id || task.assignedTo === "n1"
+  );
+  const pendingTasks = nurseTasks.filter((task) => task.status === "pending");
+  const inProgressTasks = nurseTasks.filter(
+    (task) => task.status === "in-progress"
+  );
+  const completedTasks = nurseTasks.filter(
+    (task) => task.status === "completed"
+  );
 
-  const nurseVitals = mockPatientVitals.filter((vital) => vital.nurseId === user?.id || vital.nurseId === "n1")
+  const nurseVitals = mockPatientVitals.filter(
+    (vital) => vital.nurseId === user?.id || vital.nurseId === "n1"
+  );
 
   return (
     <DashboardLayout navigation={<NurseNavigation />}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Welcome, {user?.name}</h1>
-          <p className="text-muted-foreground">Manage patient care and nursing tasks</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome, {user?.name}
+          </h1>
+          <p className="text-muted-foreground">
+            Manage patient care and nursing tasks
+          </p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Pending Tasks
+              </CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingTasks.length}</div>
-              <p className="text-xs text-muted-foreground">Awaiting attention</p>
+              <p className="text-xs text-muted-foreground">
+                Awaiting attention
+              </p>
             </CardContent>
           </Card>
 
@@ -72,13 +105,17 @@ export default function NurseDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{inProgressTasks.length}</div>
-              <p className="text-xs text-muted-foreground">Currently working on</p>
+              <p className="text-xs text-muted-foreground">
+                Currently working on
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Completed Today</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Completed Today
+              </CardTitle>
               <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -89,7 +126,9 @@ export default function NurseDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Patients Monitored</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Patients Monitored
+              </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -105,7 +144,9 @@ export default function NurseDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Urgent Tasks</CardTitle>
-                <CardDescription>High priority tasks requiring immediate attention</CardDescription>
+                <CardDescription>
+                  High priority tasks requiring immediate attention
+                </CardDescription>
               </div>
               <Link href="/nurse/tasks">
                 <Button>View All Tasks</Button>
@@ -133,16 +174,24 @@ export default function NurseDashboard() {
                               task.priority === "critical"
                                 ? "destructive"
                                 : task.priority === "high"
-                                  ? "default"
-                                  : "secondary"
+                                ? "default"
+                                : "secondary"
                             }
                           >
                             {task.priority}
                           </Badge>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">Patient: {task.patientName}</p>
-                        <p className="text-sm text-muted-foreground">Type: {task.taskType}</p>
-                        {task.notes && <p className="mt-2 text-sm text-muted-foreground">Notes: {task.notes}</p>}
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Patient: {task.patientName}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Type: {task.taskType}
+                        </p>
+                        {task.notes && (
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            Notes: {task.notes}
+                          </p>
+                        )}
                       </div>
                       <Button size="sm">Start Task</Button>
                     </div>
@@ -152,7 +201,9 @@ export default function NurseDashboard() {
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <CheckCircle2 className="mb-4 h-12 w-12 text-success" />
-                <p className="text-sm text-muted-foreground">No pending tasks</p>
+                <p className="text-sm text-muted-foreground">
+                  No pending tasks
+                </p>
               </div>
             )}
           </CardContent>
@@ -187,9 +238,15 @@ export default function NurseDashboard() {
                           <Heart className="h-4 w-4 text-red-500" />
                           <span>HR: {vital.heartRate} bpm</span>
                         </div>
-                        <div className="col-span-2 text-muted-foreground">BP: {vital.bloodPressure}</div>
+                        <div className="col-span-2 text-muted-foreground">
+                          BP: {vital.bloodPressure}
+                        </div>
                       </div>
-                      {vital.notes && <p className="mt-2 text-xs text-muted-foreground">Notes: {vital.notes}</p>}
+                      {vital.notes && (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Notes: {vital.notes}
+                        </p>
+                      )}
                     </div>
                     <Badge variant="outline">{vital.date}</Badge>
                   </div>
@@ -208,25 +265,37 @@ export default function NurseDashboard() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Link href="/nurse/vitals">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <Heart className="h-6 w-6" />
                   <span>Record Vitals</span>
                 </Button>
               </Link>
               <Link href="/nurse/tasks">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <Clock className="h-6 w-6" />
                   <span>View Tasks</span>
                 </Button>
               </Link>
               <Link href="/nurse/patients">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <Users className="h-6 w-6" />
                   <span>My Patients</span>
                 </Button>
               </Link>
               <Link href="/nurse/records">
-                <Button variant="outline" className="h-auto w-full flex-col gap-2 py-4 bg-transparent">
+                <Button
+                  variant="outline"
+                  className="h-auto w-full flex-col gap-2 py-4 bg-transparent"
+                >
                   <AlertCircle className="h-6 w-6" />
                   <span>View Alerts</span>
                 </Button>
@@ -236,5 +305,5 @@ export default function NurseDashboard() {
         </Card>
       </div>
     </DashboardLayout>
-  )
+  );
 }

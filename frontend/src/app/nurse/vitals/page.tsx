@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Thermometer, Heart, Activity } from "lucide-react"
+import { Thermometer, Heart, Activity, AlertTriangle, Stethoscope, Users, Clock } from "lucide-react"
 import Link from "next/link"
 import { mockPatientVitals } from "@/lib/mock-data"
 import { useState } from "react"
@@ -14,23 +14,25 @@ import { useState } from "react"
 function NurseNavigation() {
   const navItems = [
     { href: "/nurse", icon: Activity, label: "Dashboard" },
-    { href: "/nurse/tasks", icon: "Clock", label: "Tasks" },
+    { href: "/nurse/tasks", icon: AlertTriangle, label: "Tasks" },
     { href: "/nurse/vitals", icon: Heart, label: "Patient Vitals" },
-    { href: "/nurse/patients", icon: "Users", label: "Assigned Patients" },
-    { href: "/nurse/records", icon: "Stethoscope", label: "Medical Records" },
-  ]
+    { href: "/nurse/patients", icon: Users, label: "Assigned Patients" },
+    { href: "/nurse/records", icon: Stethoscope, label: "Medical Records" },
+    { href: "/nurse/schedule", icon: Clock, label: "Schedule" },
+  ];
 
   return (
     <>
       {navItems.map((item) => (
         <Link key={item.href} href={item.href}>
           <Button variant="ghost" className="w-full justify-start">
+            <item.icon className="mr-2 h-4 w-4" />
             {item.label}
           </Button>
         </Link>
       ))}
     </>
-  )
+  );
 }
 
 export default function VitalsPage() {
