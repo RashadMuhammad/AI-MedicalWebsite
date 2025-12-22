@@ -46,7 +46,7 @@ export default function AdminAppointmentsPage() {
 
         <div className="space-y-4">
           {mockAppointments.map((appointment) => (
-            <Card key={appointment.id}>
+            <Card key={appointment.appointment_id}>
               <CardContent className="pt-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-start gap-4">
@@ -55,15 +55,15 @@ export default function AdminAppointmentsPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{appointment.patientName}</h3>
+                        <h3 className="font-semibold">{appointment.patientname}</h3>
                         <span className="text-muted-foreground">→</span>
-                        <span className="text-sm text-muted-foreground">{appointment.doctorName}</span>
+                        <span className="text-sm text-muted-foreground">{appointment.doctor_name}</span>
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">{appointment.reason}</p>
                       <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {appointment.date}
+                          {appointment.appointment_date}
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -73,7 +73,7 @@ export default function AdminAppointmentsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline">{appointment.type}</Badge>
+                    <Badge variant="outline">{appointment.appointment_type}</Badge>
                     <Badge
                       variant={
                         appointment.status === "scheduled"

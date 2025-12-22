@@ -41,7 +41,7 @@ export default function PatientsPage() {
   const uniquePatients = Array.from(new Map(mockPatientVitals.map((vital) => [vital.patientId, vital])).values())
 
   return (
-    <DashboardLayout navigation={<NurseNavigation />}>
+    <DashboardLayout navigation={<NurseNavigation />} allowedRoles={["nurse"]}>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Assigned Patients</h1>

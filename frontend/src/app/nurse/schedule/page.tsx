@@ -271,14 +271,14 @@ export default function SchedulePage() {
 
   if (userLoading || loading) {
     return (
-      <DashboardLayout navigation={<NurseNavigation />}>
+      <DashboardLayout navigation={<NurseNavigation />} allowedRoles={["nurse"]}>
         <p>Loading...</p>
       </DashboardLayout>
     );
   }
 
   return (
-    <DashboardLayout navigation={<NurseNavigation />}>
+    <DashboardLayout navigation={<NurseNavigation />} allowedRoles={["nurse"]}>
       <div className="space-y-6">
         {/* HEADER */}
         <div className="flex items-center justify-between">
